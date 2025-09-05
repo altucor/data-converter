@@ -31,10 +31,30 @@
                 <input id="signed" type="checkbox" class="mr-2 accent-blue-500 w-5 h-5">
                 <label for="signed" class="text-gray-300 text-sm font-medium select-none cursor-pointer">Signed</label>
             </div>
+            <!-- Size Switch -->
+            <div class="flex items-center gap-4 mb-2">
+                <label class="text-gray-300 text-sm font-medium">Size:</label>
+                <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="size" value="64" class="accent-blue-500" checked>
+                    <span class="text-gray-300 text-xs">QWORD</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="size" value="32" class="accent-blue-500">
+                    <span class="text-gray-300 text-xs">DWORD</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="size" value="16" class="accent-blue-500">
+                    <span class="text-gray-300 text-xs">WORD</span>
+                </label>
+                <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="size" value="8" class="accent-blue-500">
+                    <span class="text-gray-300 text-xs">BYTE</span>
+                </label>
+            </div>
             <!-- Hexadecimal Input -->
             <div>
                 <label for="hexadecimal" class="block mb-2 text-sm font-medium text-gray-300">Hexadecimal</label>
-                <input type="text" id="hexadecimal" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none" placeholder="e.g., ff">
+                <input type="text" id="hexadecimal" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none uppercase" placeholder="e.g., FF">
             </div>
 
             <!-- Decimal Input -->
@@ -60,189 +80,241 @@
     </div>
 
     <script>
-    const decimalInput = document.getElementById('decimal');
-    const hexadecimalInput = document.getElementById('hexadecimal');
-    const binaryInput = document.getElementById('binary');
-    const octalInput = document.getElementById('octal');
-    const binaryBitsDiv = document.getElementById('binary-bits');
-    const signedCheckbox = document.getElementById('signed');
+const decimalInput = document.getElementById('decimal');
+const hexadecimalInput = document.getElementById('hexadecimal');
+const binaryInput = document.getElementById('binary');
+const octalInput = document.getElementById('octal');
+const binaryBitsDiv = document.getElementById('binary-bits');
+const signedCheckbox = document.getElementById('signed');
+const sizeRadios = document.querySelectorAll('input[name="size"]');
 
-    const inputs = [decimalInput, hexadecimalInput, binaryInput, octalInput];
+const inputs = [decimalInput, hexadecimalInput, binaryInput, octalInput];
 
-    // Helper to pad binary string to 64 bits
-    function padBinary(bin, length = 64) {
-        return bin.padStart(length, '0');
+let bitLength = 64; // Default QWORD
+
+function getBitLength() {
+    return bitLength;
+}
+
+// Helper to pad binary string to N bits
+function padBinary(bin, length) {
+    return bin.padStart(length, '0');
+}
+
+// Helper to group binary string by 4 bits
+function groupBinary(binStr) {
+    let groups = [];
+    for (let i = 0; i < binStr.length; i += 4) {
+        groups.push(binStr.slice(i, i + 4));
     }
+    return groups;
+}
 
-    // Helper to group binary string by 4 bits
-    function groupBinary(binStr) {
-        let groups = [];
-        for (let i = 0; i < binStr.length; i += 4) {
-            groups.push(binStr.slice(i, i + 4));
-        }
-        return groups;
-    }
+// Render clickable binary bits, 2 lines, grouped by 4
+function renderBinaryBits(binStr) {
+    const len = getBitLength();
+    binStr = padBinary(binStr, len).slice(-len);
+    binaryBitsDiv.innerHTML = '';
+    const groups = groupBinary(binStr);
+    const lines = len > 32 ? 2 : 1;
+    const groupsPerLine = lines === 2 ? (len / 8) : (len / 4);
 
-    // Render clickable binary bits, 2 lines of 32 bits, grouped by 4
-    function renderBinaryBits(binStr) {
-        // Always use 64 bits for display
-        binStr = padBinary(binStr, 64).slice(-64);
-        binaryBitsDiv.innerHTML = '';
-        const groups = groupBinary(binStr);
-        for (let line = 0; line < 2; line++) {
-            const lineDiv = document.createElement('div');
-            lineDiv.className = 'flex gap-1';
-            for (let g = 0; g < 8; g++) {
-                const groupIdx = line * 8 + g;
-                const group = groups[groupIdx] || '0000';
-                const groupDiv = document.createElement('div');
-                groupDiv.className = 'flex gap-0.5';
-                for (let b = 0; b < 4; b++) {
-                    const bitIdx = groupIdx * 4 + b;
-                    const bit = group[b] || '0';
-                    const span = document.createElement('span');
-                    span.textContent = bit;
-                    span.className = `cursor-pointer select-none px-0.5 py-0.5 rounded text-sm font-mono font-bold transition
-                        ${bit === '1' ? 'bg-blue-500 text-white' : 'bg-gray-600 text-gray-200'} hover:ring-2 hover:ring-blue-400`;
-                    span.style.minWidth = '1em';
-                    span.dataset.index = bitIdx;
-                    span.addEventListener('click', () => {
-                        let bitsArr = binStr.split('');
-                        bitsArr[bitIdx] = bitsArr[bitIdx] === '1' ? '0' : '1';
-                        let newBin = bitsArr.join('');
-                        binaryInput.value = newBin.replace(/^0+/, '') || '0';
-                        updateValues('binary', newBin);
-                    });
-                    groupDiv.appendChild(span);
-                }
-                lineDiv.appendChild(groupDiv);
+    for (let line = 0; line < lines; line++) {
+        const lineDiv = document.createElement('div');
+        lineDiv.className = 'flex gap-1';
+        for (let g = 0; g < groupsPerLine / lines; g++) {
+            const groupIdx = line * (groupsPerLine / lines) + g;
+            const group = groups[groupIdx] || '0000';
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'flex gap-0.5';
+            for (let b = 0; b < 4; b++) {
+                const bitIdx = groupIdx * 4 + b;
+                if (bitIdx >= len) continue;
+                const bit = group[b] || '0';
+                const span = document.createElement('span');
+                span.textContent = bit;
+                span.className = `cursor-pointer select-none px-0.5 py-0.5 rounded text-sm font-mono font-bold transition
+                    ${bit === '1' ? 'bg-blue-500 text-white' : 'bg-gray-600 text-gray-200'} hover:ring-2 hover:ring-blue-400`;
+                span.style.minWidth = '1em';
+                span.dataset.index = bitIdx;
+                span.addEventListener('click', () => {
+                    let bitsArr = binStr.split('');
+                    bitsArr[bitIdx] = bitsArr[bitIdx] === '1' ? '0' : '1';
+                    let newBin = bitsArr.join('');
+                    binaryInput.value = newBin.replace(/^0+/, '') || '0';
+                    updateValues('binary', newBin);
+                });
+                groupDiv.appendChild(span);
             }
-            binaryBitsDiv.appendChild(lineDiv);
+            lineDiv.appendChild(groupDiv);
         }
+        binaryBitsDiv.appendChild(lineDiv);
     }
+}
 
-    // Add event listener to all input fields except binary (handled separately)
-    [decimalInput, hexadecimalInput, octalInput].forEach(input => {
-        input.addEventListener('input', (e) => {
-            const sourceInput = e.target;
-            const sourceValue = sourceInput.value;
-            if (sourceValue === '') {
-                clearAllInputs();
-                renderBinaryBits('0');
-                return;
-            }
-            updateValues(sourceInput.id, sourceValue);
-        });
+// Input filters
+hexadecimalInput.addEventListener('input', (e) => {
+    let val = e.target.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase().slice(0, getBitLength() / 4);
+    hexadecimalInput.value = val;
+    updateValues('hexadecimal', val);
+});
+decimalInput.addEventListener('input', (e) => {
+    let isSigned = signedCheckbox.checked;
+    let maxLen = getBitLength();
+    let max = isSigned ? (2n ** BigInt(maxLen - 1n) - 1n) : (2n ** BigInt(maxLen) - 1n);
+    let min = isSigned ? -(2n ** BigInt(maxLen - 1n)) : 0n;
+    let val = e.target.value.replace(/[^0-9\-]/g, '');
+    if (isSigned && val.startsWith('-')) {
+        val = '-' + val.slice(1).replace(/-/g, '');
+    } else {
+        val = val.replace(/-/g, '');
+    }
+    // Clamp value
+    try {
+        let n = BigInt(val || '0');
+        if (n > max) n = max;
+        if (n < min) n = min;
+        decimalInput.value = n.toString();
+        updateValues('decimal', n.toString());
+    } catch {
+        decimalInput.value = '';
+        updateValues('decimal', '');
+    }
+});
+octalInput.addEventListener('input', (e) => {
+    let val = e.target.value.replace(/[^0-7]/g, '').slice(0, Math.ceil(getBitLength() / 3));
+    octalInput.value = val;
+    updateValues('octal', val);
+});
+binaryInput.addEventListener('input', (e) => {
+    let val = e.target.value.replace(/[^01]/g, '').slice(-getBitLength());
+    binaryInput.value = val;
+    updateValues('binary', val);
+});
+
+// Add event listener to all input fields except binary (handled separately above)
+[decimalInput].forEach(input => {
+    input.addEventListener('blur', (e) => {
+        // Re-validate on blur
+        updateValues('decimal', input.value);
     });
+});
 
-    // Binary input (hidden) triggers recalculation and bits rendering
-    binaryInput.addEventListener('input', (e) => {
-        const val = e.target.value.replace(/[^01]/g, '');
-        binaryInput.value = val;
-        if (val === '') {
-            clearAllInputs();
-            renderBinaryBits('0');
-            return;
-        }
-        updateValues('binary', val);
-    });
+// Signed checkbox triggers recalculation
+signedCheckbox.addEventListener('change', () => {
+    let binVal = binaryInput.value || '0';
+    updateValues('binary', binVal);
+});
 
-    // Signed checkbox triggers recalculation
-    signedCheckbox.addEventListener('change', () => {
-        let binVal = binaryInput.value || '0';
+// Size radio triggers recalculation and limits
+sizeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+        bitLength = parseInt(document.querySelector('input[name="size"]:checked').value, 10);
+        // Clamp all fields to new size
+        let binVal = padBinary(binaryInput.value || '0', bitLength).slice(-bitLength);
+        binaryInput.value = binVal.replace(/^0+/, '') || '0';
         updateValues('binary', binVal);
     });
+});
 
-    // Initial render
-    renderBinaryBits('0');
+// Initial render
+renderBinaryBits('0'.repeat(getBitLength()));
 
-    function updateValues(sourceId, sourceValue) {
-        let decimalValue;
-        let binStr = '';
-        let isSigned = signedCheckbox.checked;
+function updateValues(sourceId, sourceValue) {
+    let decimalValue;
+    let binStr = '';
+    let isSigned = signedCheckbox.checked;
+    let len = getBitLength();
 
-        try {
-            switch (sourceId) {
-                case 'decimal':
-                    if (/^-?\d+$/.test(sourceValue)) {
-                        let num = BigInt(sourceValue);
-                        if (isSigned) {
-                            if (num < -(2n ** 63n)) num = -(2n ** 63n);
-                            if (num > (2n ** 63n - 1n)) num = 2n ** 63n - 1n;
-                            decimalValue = num;
-                            binStr = (num < 0 ? (num + 2n ** 64n) : num).toString(2);
-                        } else {
-                            if (num < 0n) num = 0n;
-                            if (num > (2n ** 64n - 1n)) num = 2n ** 64n - 1n;
-                            decimalValue = num;
-                            binStr = num.toString(2);
-                        }
-                    }
-                    break;
-                case 'hexadecimal':
-                    if (/^[0-9a-fA-F]+$/.test(sourceValue)) {
-                        let num = BigInt('0x' + sourceValue);
-                        if (isSigned && num >= 2n ** 63n) {
-                            decimalValue = num - 2n ** 64n;
-                        } else {
-                            decimalValue = num;
-                        }
+    try {
+        switch (sourceId) {
+            case 'decimal':
+                if (/^-?\d+$/.test(sourceValue)) {
+                    let num = BigInt(sourceValue);
+                    if (isSigned) {
+                        let min = -(2n ** BigInt(len - 1));
+                        let max = 2n ** BigInt(len - 1) - 1n;
+                        if (num < min) num = min;
+                        if (num > max) num = max;
+                        decimalValue = num;
+                        binStr = (num < 0 ? (num + 2n ** BigInt(len)) : num).toString(2);
+                    } else {
+                        let min = 0n;
+                        let max = 2n ** BigInt(len) - 1n;
+                        if (num < min) num = min;
+                        if (num > max) num = max;
+                        decimalValue = num;
                         binStr = num.toString(2);
                     }
-                    break;
-                case 'binary':
-                    if (/^[01]+$/.test(sourceValue)) {
-                        let num = BigInt('0b' + padBinary(sourceValue, 64).slice(-64));
-                        if (isSigned && sourceValue.length === 64 && sourceValue[0] === '1') {
-                            decimalValue = num - 2n ** 64n;
-                        } else {
-                            decimalValue = num;
-                        }
-                        binStr = num.toString(2);
+                }
+                break;
+            case 'hexadecimal':
+                if (/^[0-9A-F]+$/.test(sourceValue)) {
+                    let num = BigInt('0x' + sourceValue);
+                    num = num & (2n ** BigInt(len) - 1n);
+                    if (isSigned && num >= 2n ** BigInt(len - 1)) {
+                        decimalValue = num - 2n ** BigInt(len);
+                    } else {
+                        decimalValue = num;
                     }
-                    break;
-                case 'octal':
-                    if (/^[0-7]+$/.test(sourceValue)) {
-                        let num = BigInt('0o' + sourceValue);
-                        if (isSigned && num >= 2n ** 63n) {
-                            decimalValue = num - 2n ** 64n;
-                        } else {
-                            decimalValue = num;
-                        }
-                        binStr = num.toString(2);
+                    binStr = num.toString(2);
+                }
+                break;
+            case 'binary':
+                if (/^[01]+$/.test(sourceValue)) {
+                    let bin = padBinary(sourceValue, len).slice(-len);
+                    let num = BigInt('0b' + bin);
+                    if (isSigned && bin[0] === '1') {
+                        decimalValue = num - 2n ** BigInt(len);
+                    } else {
+                        decimalValue = num;
                     }
-                    break;
-            }
-        } catch (e) {
-            decimalValue = undefined;
+                    binStr = bin;
+                }
+                break;
+            case 'octal':
+                if (/^[0-7]+$/.test(sourceValue)) {
+                    let num = BigInt('0o' + sourceValue);
+                    num = num & (2n ** BigInt(len) - 1n);
+                    if (isSigned && num >= 2n ** BigInt(len - 1)) {
+                        decimalValue = num - 2n ** BigInt(len);
+                    } else {
+                        decimalValue = num;
+                    }
+                    binStr = num.toString(2);
+                }
+                break;
         }
+    } catch (e) {
+        decimalValue = undefined;
+    }
 
-        if (typeof decimalValue !== 'undefined' && decimalValue !== null) {
-            binStr = padBinary(binStr, 64).slice(-64);
+    if (typeof decimalValue !== 'undefined' && decimalValue !== null) {
+        binStr = padBinary(binStr, len).slice(-len);
 
-            if (sourceId !== 'decimal') decimalInput.value = decimalValue.toString();
-            if (sourceId !== 'hexadecimal') hexadecimalInput.value = BigInt('0b' + binStr).toString(16).toLowerCase();
-            if (sourceId !== 'binary') {
-                binaryInput.value = binStr.replace(/^0+/, '') || '0';
-                renderBinaryBits(binStr);
-            } else {
-                renderBinaryBits(binStr);
-            }
-            if (sourceId !== 'octal') octalInput.value = BigInt('0b' + binStr).toString(8);
+        if (sourceId !== 'decimal') decimalInput.value = decimalValue.toString();
+        if (sourceId !== 'hexadecimal') hexadecimalInput.value = BigInt('0b' + binStr).toString(16).toUpperCase().padStart(len / 4, '0');
+        if (sourceId !== 'binary') {
+            binaryInput.value = binStr.replace(/^0+/, '') || '0';
+            renderBinaryBits(binStr);
         } else {
-            clearAllInputs(sourceId);
-            renderBinaryBits('0'.repeat(64));
+            renderBinaryBits(binStr);
         }
+        if (sourceId !== 'octal') octalInput.value = BigInt('0b' + binStr).toString(8).padStart(Math.ceil(len / 3), '0');
+    } else {
+        clearAllInputs(sourceId);
+        renderBinaryBits('0'.repeat(len));
     }
+}
 
-    function clearAllInputs(skipId = null) {
-        inputs.forEach(input => {
-            if (input.id !== skipId) {
-                input.value = '';
-            }
-        });
-    }
-    </script>
+function clearAllInputs(skipId = null) {
+    inputs.forEach(input => {
+        if (input.id !== skipId) {
+            input.value = '';
+        }
+    });
+}
+</script>
 </body>
 </html>
 
