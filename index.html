@@ -27,7 +27,7 @@
     <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-2xl mx-4">
         
         <h1 class="text-3xl font-bold text-center text-white mb-2">Number Base Converter</h1>
-        <p class="text-center text-gray-400 mb-8">Convert between Decimal, Hexadecimal, Binary, and Octal.</p>
+        <p class="text-center text-gray-400 mb-8">Convert between Hexadecimal, Decimal, Octal and Binary.</p>
 
         <div class="grid grid-cols-1 gap-6">
             <!-- Signed Checkbox and Size Switch on the same line -->
@@ -76,6 +76,12 @@
                 <input type="text" id="octal" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none" placeholder="e.g., 377">
             </div>
 
+            <!-- Binary Stream Input -->
+            <div>
+                <label for="binary-stream" class="block mb-2 text-sm font-medium text-gray-300">Binary Stream</label>
+                <input type="text" id="binary-stream" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none font-mono" placeholder="e.g., 11001010">
+            </div>
+
             <!-- Binary Input -->
             <div>
                 <label for="binary" class="block mb-2 text-sm font-medium text-gray-300">Binary</label>
@@ -91,11 +97,12 @@ const decimalInput = document.getElementById('decimal');
 const hexadecimalInput = document.getElementById('hexadecimal');
 const binaryInput = document.getElementById('binary');
 const octalInput = document.getElementById('octal');
+const binaryStreamInput = document.getElementById('binary-stream');
 const binaryBitsDiv = document.getElementById('binary-bits');
 const signedCheckbox = document.getElementById('signed');
 const sizeRadios = document.querySelectorAll('input[name="size"]');
 
-const inputs = [decimalInput, hexadecimalInput, binaryInput, octalInput];
+const inputs = [decimalInput, hexadecimalInput, binaryInput, octalInput, binaryStreamInput];
 
 let bitLength = 64; // Default QWORD
 
@@ -203,8 +210,14 @@ function renderBinaryIndexes() {
 
 // Input filters
 hexadecimalInput.addEventListener('input', (e) => {
-    let val = e.target.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase().slice(0, getBitLength() / 4);
-    hexadecimalInput.value = val;
+    // Accept both lowercase and uppercase A-F, and allow pasting
+    let val = e.target.value;
+    // Only keep valid hex chars, then uppercase
+    val = val.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
+    // Limit to max hex digits for current bit length
+    val = val.slice(0, getBitLength() / 4);
+    // Set value and update
+    if (hexadecimalInput.value !== val) hexadecimalInput.value = val;
     updateValues('hexadecimal', val);
 });
 decimalInput.addEventListener('input', (e) => {
@@ -237,6 +250,14 @@ octalInput.addEventListener('input', (e) => {
 });
 binaryInput.addEventListener('input', (e) => {
     let val = e.target.value.replace(/[^01]/g, '').slice(-getBitLength());
+    binaryInput.value = val;
+    updateValues('binary', val);
+});
+
+// Binary Stream input: mirror binary bits, allow copy/paste
+binaryStreamInput.addEventListener('input', (e) => {
+    let val = e.target.value.replace(/[^01]/g, '').slice(-getBitLength());
+    binaryStreamInput.value = val;
     binaryInput.value = val;
     updateValues('binary', val);
 });
@@ -308,6 +329,7 @@ function updateValues(sourceId, sourceValue) {
                 }
                 break;
             case 'binary':
+            case 'binary-stream':
                 if (/^[01]+$/.test(sourceValue)) {
                     let bin = padBinary(sourceValue, len).slice(-len);
                     let num = BigInt('0b' + bin);
@@ -353,14 +375,17 @@ function updateValues(sourceId, sourceValue) {
         if (sourceId !== 'hexadecimal') hexadecimalInput.value = hexVal;
         if (sourceId !== 'binary') {
             binaryInput.value = binStr.slice(-len).replace(/^0+(?!$)/, '') || '0';
+            binaryStreamInput.value = binStr.slice(-len).replace(/^0+(?!$)/, '') || '0';
             renderBinaryBits(binStr);
         } else {
+            binaryStreamInput.value = binStr.slice(-len).replace(/^0+(?!$)/, '') || '0';
             renderBinaryBits(binStr);
         }
         if (sourceId !== 'octal') octalInput.value = octVal;
     } else {
         clearAllInputs(sourceId);
         renderBinaryBits('0'.repeat(64));
+        binaryStreamInput.value = '';
     }
 }
 
