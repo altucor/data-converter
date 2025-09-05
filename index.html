@@ -30,30 +30,33 @@
         <p class="text-center text-gray-400 mb-8">Convert between Decimal, Hexadecimal, Binary, and Octal.</p>
 
         <div class="grid grid-cols-1 gap-6">
-            <!-- Signed Checkbox -->
-            <div class="flex items-center mb-2">
-                <input id="signed" type="checkbox" class="mr-2 accent-blue-500 w-5 h-5">
-                <label for="signed" class="text-gray-300 text-sm font-medium select-none cursor-pointer">Signed</label>
-            </div>
-            <!-- Size Switch -->
-            <div class="flex items-center gap-4 mb-2">
-                <label class="text-gray-300 text-sm font-medium">Size:</label>
-                <label class="flex items-center gap-1 cursor-pointer">
-                    <input type="radio" name="size" value="64" class="accent-blue-500" checked>
-                    <span class="text-gray-300 text-xs">QWORD</span>
-                </label>
-                <label class="flex items-center gap-1 cursor-pointer">
-                    <input type="radio" name="size" value="32" class="accent-blue-500">
-                    <span class="text-gray-300 text-xs">DWORD</span>
-                </label>
-                <label class="flex items-center gap-1 cursor-pointer">
-                    <input type="radio" name="size" value="16" class="accent-blue-500">
-                    <span class="text-gray-300 text-xs">WORD</span>
-                </label>
-                <label class="flex items-center gap-1 cursor-pointer">
-                    <input type="radio" name="size" value="8" class="accent-blue-500">
-                    <span class="text-gray-300 text-xs">BYTE</span>
-                </label>
+            <!-- Signed Checkbox and Size Switch on the same line -->
+            <div class="flex items-center gap-6 mb-2">
+                <!-- Signed Checkbox -->
+                <div class="flex items-center">
+                    <input id="signed" type="checkbox" class="mr-2 accent-blue-500 w-5 h-5">
+                    <label for="signed" class="text-gray-300 text-sm font-medium select-none cursor-pointer">Signed</label>
+                </div>
+                <!-- Size Switch -->
+                <div class="flex items-center gap-4">
+                    <label class="text-gray-300 text-sm font-medium">Size:</label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" name="size" value="64" class="accent-blue-500" checked>
+                        <span class="text-gray-300 text-xs">QWORD</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" name="size" value="32" class="accent-blue-500">
+                        <span class="text-gray-300 text-xs">DWORD</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" name="size" value="16" class="accent-blue-500">
+                        <span class="text-gray-300 text-xs">WORD</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" name="size" value="8" class="accent-blue-500">
+                        <span class="text-gray-300 text-xs">BYTE</span>
+                    </label>
+                </div>
             </div>
             <!-- Hexadecimal Input -->
             <div>
