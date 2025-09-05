@@ -72,7 +72,8 @@
             <!-- Binary Input -->
             <div>
                 <label for="binary" class="block mb-2 text-sm font-medium text-gray-300">Binary</label>
-                <div id="binary-bits" class="flex flex-col gap-1 mb-4"></div>
+                <div id="binary-bits" class="flex flex-col gap-1 mb-2"></div>
+                <div id="binary-indexes" class="flex flex-col gap-1"></div>
                 <input type="text" id="binary" class="hidden" autocomplete="off">
             </div>
         </div>
@@ -85,6 +86,7 @@ const hexadecimalInput = document.getElementById('hexadecimal');
 const binaryInput = document.getElementById('binary');
 const octalInput = document.getElementById('octal');
 const binaryBitsDiv = document.getElementById('binary-bits');
+const binaryIndexesDiv = document.getElementById('binary-indexes');
 const signedCheckbox = document.getElementById('signed');
 const sizeRadios = document.querySelectorAll('input[name="size"]');
 
@@ -96,59 +98,84 @@ function getBitLength() {
     return bitLength;
 }
 
-// Helper to pad binary string to N bits
-function padBinary(bin, length) {
+// Always show 64 bits, but only allow interaction for active bits
+function getActiveBitsMask() {
+    // Returns an array of 64 booleans, true if bit is active
+    const len = getBitLength();
+    const mask = Array(64).fill(false);
+    for (let i = 64 - len; i < 64; i++) mask[i] = true;
+    return mask;
+}
+
+// Helper to pad binary string to 64 bits
+function padBinary(bin, length = 64) {
     return bin.padStart(length, '0');
 }
 
-// Helper to group binary string by 4 bits
-function groupBinary(binStr) {
-    let groups = [];
-    for (let i = 0; i < binStr.length; i += 4) {
-        groups.push(binStr.slice(i, i + 4));
-    }
-    return groups;
-}
-
-// Render clickable binary bits, 2 lines, grouped by 4
+// Render clickable binary bits, 4 lines of 16 bits, grouped by 4, MSB left, LSB right
 function renderBinaryBits(binStr) {
-    const len = getBitLength();
-    binStr = padBinary(binStr, len).slice(-len);
+    binStr = padBinary(binStr, 64).slice(-64);
     binaryBitsDiv.innerHTML = '';
-    const groups = groupBinary(binStr);
-    const lines = len > 32 ? 2 : 1;
-    const groupsPerLine = lines === 2 ? (len / 8) : (len / 4);
+    const mask = getActiveBitsMask();
 
-    for (let line = 0; line < lines; line++) {
+    for (let line = 0; line < 4; line++) {
         const lineDiv = document.createElement('div');
-        lineDiv.className = 'flex gap-1';
-        for (let g = 0; g < groupsPerLine / lines; g++) {
-            const groupIdx = line * (groupsPerLine / lines) + g;
-            const group = groups[groupIdx] || '0000';
+        lineDiv.className = 'flex gap-4 justify-center';
+        for (let group = 0; group < 4; group++) {
             const groupDiv = document.createElement('div');
-            groupDiv.className = 'flex gap-0.5';
+            groupDiv.className = 'flex gap-2';
             for (let b = 0; b < 4; b++) {
-                const bitIdx = groupIdx * 4 + b;
-                if (bitIdx >= len) continue;
-                const bit = group[b] || '0';
+                const bitIdx = line * 16 + group * 4 + b;
+                const bit = binStr[bitIdx];
+                const isActive = mask[bitIdx];
                 const span = document.createElement('span');
                 span.textContent = bit;
-                span.className = `cursor-pointer select-none px-0.5 py-0.5 rounded text-sm font-mono font-bold transition
-                    ${bit === '1' ? 'bg-blue-500 text-white' : 'bg-gray-600 text-gray-200'} hover:ring-2 hover:ring-blue-400`;
-                span.style.minWidth = '1em';
+                span.className = `select-none px-1 py-0.5 rounded text-sm font-mono font-bold transition w-6 text-center
+                    ${bit === '1' ? 'bg-blue-500 text-white' : 'bg-gray-600 text-gray-200'}
+                    ${isActive ? 'cursor-pointer hover:ring-2 hover:ring-blue-400' : 'opacity-40 cursor-not-allowed'}`;
                 span.dataset.index = bitIdx;
-                span.addEventListener('click', () => {
-                    let bitsArr = binStr.split('');
-                    bitsArr[bitIdx] = bitsArr[bitIdx] === '1' ? '0' : '1';
-                    let newBin = bitsArr.join('');
-                    binaryInput.value = newBin.replace(/^0+/, '') || '0';
-                    updateValues('binary', newBin);
-                });
+                if (isActive) {
+                    span.addEventListener('click', () => {
+                        let bitsArr = binStr.split('');
+                        bitsArr[bitIdx] = bitsArr[bitIdx] === '1' ? '0' : '1';
+                        let newBin = bitsArr.join('');
+                        // Only update active bits in input
+                        let activeBits = newBin.slice(-bitLength);
+                        binaryInput.value = activeBits.replace(/^0+/, '') || '0';
+                        updateValues('binary', activeBits);
+                    });
+                }
                 groupDiv.appendChild(span);
             }
             lineDiv.appendChild(groupDiv);
         }
         binaryBitsDiv.appendChild(lineDiv);
+    }
+    renderBinaryIndexes();
+}
+
+// Render static LSB indexes under each 4-bit group
+function renderBinaryIndexes() {
+    binaryIndexesDiv.innerHTML = '';
+    for (let line = 0; line < 4; line++) {
+        const lineDiv = document.createElement('div');
+        lineDiv.className = 'flex gap-4 justify-center';
+        for (let group = 0; group < 4; group++) {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'flex flex-col items-end w-[4.5em]';
+            const empty = document.createElement('span');
+            empty.className = 'block h-0';
+            groupDiv.appendChild(empty);
+            // LSB index for this group
+            const bitIdx = line * 16 + group * 4;
+            const lsbIdx = 63 - bitIdx - 3;
+            const idxLabel = document.createElement('span');
+            idxLabel.textContent = lsbIdx;
+            idxLabel.className = 'block text-xs text-gray-400 w-full text-right';
+            groupDiv.appendChild(idxLabel);
+            lineDiv.appendChild(groupDiv);
+        }
+        binaryIndexesDiv.appendChild(lineDiv);
     }
 }
 
@@ -195,7 +222,6 @@ binaryInput.addEventListener('input', (e) => {
 // Add event listener to all input fields except binary (handled separately above)
 [decimalInput].forEach(input => {
     input.addEventListener('blur', (e) => {
-        // Re-validate on blur
         updateValues('decimal', input.value);
     });
 });
@@ -210,7 +236,6 @@ signedCheckbox.addEventListener('change', () => {
 sizeRadios.forEach(radio => {
     radio.addEventListener('change', () => {
         bitLength = parseInt(document.querySelector('input[name="size"]:checked').value, 10);
-        // Clamp all fields to new size
         let binVal = padBinary(binaryInput.value || '0', bitLength).slice(-bitLength);
         binaryInput.value = binVal.replace(/^0+/, '') || '0';
         updateValues('binary', binVal);
@@ -218,7 +243,7 @@ sizeRadios.forEach(radio => {
 });
 
 // Initial render
-renderBinaryBits('0'.repeat(getBitLength()));
+renderBinaryBits('0'.repeat(64));
 
 function updateValues(sourceId, sourceValue) {
     let decimalValue;
@@ -249,7 +274,7 @@ function updateValues(sourceId, sourceValue) {
                 }
                 break;
             case 'hexadecimal':
-                if (/^[0-9A-F]+$/.test(sourceValue)) {
+                if (/^[0-9A-Fa-f]+$/.test(sourceValue)) {
                     let num = BigInt('0x' + sourceValue);
                     num = num & (2n ** BigInt(len) - 1n);
                     if (isSigned && num >= 2n ** BigInt(len - 1)) {
@@ -290,20 +315,20 @@ function updateValues(sourceId, sourceValue) {
     }
 
     if (typeof decimalValue !== 'undefined' && decimalValue !== null) {
-        binStr = padBinary(binStr, len).slice(-len);
+        binStr = padBinary(binStr, 64).slice(-64);
 
         if (sourceId !== 'decimal') decimalInput.value = decimalValue.toString();
-        if (sourceId !== 'hexadecimal') hexadecimalInput.value = BigInt('0b' + binStr).toString(16).toUpperCase().padStart(len / 4, '0');
+        if (sourceId !== 'hexadecimal') hexadecimalInput.value = BigInt('0b' + binStr.slice(-len)).toString(16).toUpperCase().padStart(len / 4, '0');
         if (sourceId !== 'binary') {
-            binaryInput.value = binStr.replace(/^0+/, '') || '0';
+            binaryInput.value = binStr.slice(-len).replace(/^0+/, '') || '0';
             renderBinaryBits(binStr);
         } else {
             renderBinaryBits(binStr);
         }
-        if (sourceId !== 'octal') octalInput.value = BigInt('0b' + binStr).toString(8).padStart(Math.ceil(len / 3), '0');
+        if (sourceId !== 'octal') octalInput.value = BigInt('0b' + binStr.slice(-len)).toString(8).padStart(Math.ceil(len / 3), '0');
     } else {
         clearAllInputs(sourceId);
-        renderBinaryBits('0'.repeat(len));
+        renderBinaryBits('0'.repeat(64));
     }
 }
 
