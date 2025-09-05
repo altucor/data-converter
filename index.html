@@ -73,7 +73,6 @@
             <div>
                 <label for="binary" class="block mb-2 text-sm font-medium text-gray-300">Binary</label>
                 <div id="binary-bits" class="flex flex-col gap-1 mb-2"></div>
-                <div id="binary-indexes" class="flex flex-col gap-1"></div>
                 <input type="text" id="binary" class="hidden" autocomplete="off">
             </div>
         </div>
@@ -86,7 +85,6 @@ const hexadecimalInput = document.getElementById('hexadecimal');
 const binaryInput = document.getElementById('binary');
 const octalInput = document.getElementById('octal');
 const binaryBitsDiv = document.getElementById('binary-bits');
-const binaryIndexesDiv = document.getElementById('binary-indexes');
 const signedCheckbox = document.getElementById('signed');
 const sizeRadios = document.querySelectorAll('input[name="size"]');
 
@@ -119,11 +117,19 @@ function renderBinaryBits(binStr) {
     const mask = getActiveBitsMask();
 
     for (let line = 0; line < 4; line++) {
+        // Bits line
         const lineDiv = document.createElement('div');
-        lineDiv.className = 'flex gap-4 justify-center';
+        lineDiv.className = 'flex gap-4 justify-center items-end';
+
         for (let group = 0; group < 4; group++) {
+            // Bits group
             const groupDiv = document.createElement('div');
-            groupDiv.className = 'flex gap-2';
+            groupDiv.className = 'flex flex-col items-end';
+
+            // Bits row
+            const bitsRow = document.createElement('div');
+            bitsRow.className = 'flex gap-2';
+
             for (let b = 0; b < 4; b++) {
                 const bitIdx = line * 16 + group * 4 + b;
                 const bit = binStr[bitIdx];
@@ -139,19 +145,28 @@ function renderBinaryBits(binStr) {
                         let bitsArr = binStr.split('');
                         bitsArr[bitIdx] = bitsArr[bitIdx] === '1' ? '0' : '1';
                         let newBin = bitsArr.join('');
-                        // Only update active bits in input
                         let activeBits = newBin.slice(-bitLength);
                         binaryInput.value = activeBits.replace(/^0+/, '') || '0';
                         updateValues('binary', activeBits);
                     });
                 }
-                groupDiv.appendChild(span);
+                bitsRow.appendChild(span);
             }
+
+            // LSB index for this group (rightmost bit in group)
+            const groupStartBitIdx = line * 16 + group * 4;
+            const lsbIdx = 63 - (groupStartBitIdx + 3);
+            const idxLabel = document.createElement('span');
+            idxLabel.textContent = lsbIdx;
+            idxLabel.className = 'block text-xs text-gray-400 w-full text-right mt-0.5';
+
+            groupDiv.appendChild(bitsRow);
+            groupDiv.appendChild(idxLabel);
+
             lineDiv.appendChild(groupDiv);
         }
         binaryBitsDiv.appendChild(lineDiv);
     }
-    renderBinaryIndexes();
 }
 
 // Render static LSB indexes under each 4-bit group
@@ -317,15 +332,25 @@ function updateValues(sourceId, sourceValue) {
     if (typeof decimalValue !== 'undefined' && decimalValue !== null) {
         binStr = padBinary(binStr, 64).slice(-64);
 
-        if (sourceId !== 'decimal') decimalInput.value = decimalValue.toString();
-        if (sourceId !== 'hexadecimal') hexadecimalInput.value = BigInt('0b' + binStr.slice(-len)).toString(16).toUpperCase().padStart(len / 4, '0');
+        // Remove leading zeros for display (but keep at least one digit)
+        let hexVal = BigInt('0b' + binStr.slice(-len)).toString(16).toUpperCase();
+        let octVal = BigInt('0b' + binStr.slice(-len)).toString(8);
+        let decVal = decimalValue.toString();
+
+        // Remove leading zeros (but keep at least one digit)
+        hexVal = hexVal.replace(/^0+(?!$)/, '');
+        octVal = octVal.replace(/^0+(?!$)/, '');
+        decVal = decVal.replace(/^0+(?!$)/, '');
+
+        if (sourceId !== 'decimal') decimalInput.value = decVal;
+        if (sourceId !== 'hexadecimal') hexadecimalInput.value = hexVal;
         if (sourceId !== 'binary') {
-            binaryInput.value = binStr.slice(-len).replace(/^0+/, '') || '0';
+            binaryInput.value = binStr.slice(-len).replace(/^0+(?!$)/, '') || '0';
             renderBinaryBits(binStr);
         } else {
             renderBinaryBits(binStr);
         }
-        if (sourceId !== 'octal') octalInput.value = BigInt('0b' + binStr.slice(-len)).toString(8).padStart(Math.ceil(len / 3), '0');
+        if (sourceId !== 'octal') octalInput.value = octVal;
     } else {
         clearAllInputs(sourceId);
         renderBinaryBits('0'.repeat(64));
