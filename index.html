@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Base Converter</title>
+    <title>Data Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,8 +26,8 @@
 
     <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-2xl mx-4">
         
-        <h1 class="text-3xl font-bold text-center text-white mb-2">Number Base Converter</h1>
-        <p class="text-center text-gray-400 mb-8">Convert between Hexadecimal, Decimal, Octal and Binary.</p>
+        <h1 class="text-3xl font-bold text-center text-white mb-2">Data Converter</h1>
+        <p class="text-center text-gray-400 mb-8">Convert between Hexadecimal, Decimal, Octal, Binary and other.</p>
 
         <div class="grid grid-cols-1 gap-6">
             <!-- Signed Checkbox and Size Switch on the same line -->
@@ -87,6 +87,25 @@
                 <label for="binary" class="block mb-2 text-sm font-medium text-gray-300">Binary</label>
                 <div id="binary-bits" class="flex flex-col gap-1 mb-2"></div>
                 <input type="text" id="binary" class="hidden" autocomplete="off">
+            </div>
+
+            <!-- Separator line -->
+            <div class="border-t border-gray-600 my-4"></div>
+
+            <!-- Float/Double/Unix Timestamp Inputs -->
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label for="float32" class="block mb-2 text-sm font-medium text-gray-300">Float 32-bit</label>
+                    <input type="text" id="float32" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none font-mono" placeholder="e.g., 3.14">
+                </div>
+                <div>
+                    <label for="double64" class="block mb-2 text-sm font-medium text-gray-300">Double 64-bit</label>
+                    <input type="text" id="double64" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none font-mono" placeholder="e.g., 3.1415926535">
+                </div>
+                <div>
+                    <label for="unixts32" class="block mb-2 text-sm font-medium text-gray-300">UNIX Timestamp 32-bit</label>
+                    <input type="text" id="unixts32" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none font-mono" placeholder="e.g., 1700000000">
+                </div>
             </div>
         </div>
 
@@ -288,6 +307,59 @@ sizeRadios.forEach(radio => {
 // Initial render
 renderBinaryBits('0'.repeat(64));
 
+const float32Input = document.getElementById('float32');
+const double64Input = document.getElementById('double64');
+const unixts32Input = document.getElementById('unixts32');
+
+// Float 32-bit input
+float32Input.addEventListener('input', (e) => {
+    // Accept both dot and comma as decimal separator
+    let val = e.target.value.trim().replace(',', '.');
+    // Accept valid float numbers (including scientific notation)
+    if (!/^[-+]?\d*(?:[.,]?\d*)?(?:[eE][-+]?\d+)?$/.test(e.target.value.trim()) && e.target.value.trim() !== '') {
+        // Still allow clearing the field
+        updateValues('float32', '');
+        return;
+    }
+    // Allow empty field
+    if (val === '') {
+        updateValues('float32', '');
+        return;
+    }
+    if (isNaN(Number(val))) return;
+    if (getBitLength() !== 32) return;
+    updateValues('float32', val);
+});
+
+// Double 64-bit input
+double64Input.addEventListener('input', (e) => {
+    let val = e.target.value.trim().replace(',', '.');
+    if (!/^[-+]?\d*(?:[.,]?\d*)?(?:[eE][-+]?\d+)?$/.test(e.target.value.trim()) && e.target.value.trim() !== '') {
+        updateValues('double64', '');
+        return;
+    }
+    if (val === '') {
+        updateValues('double64', '');
+        return;
+    }
+    if (isNaN(Number(val))) return;
+    if (getBitLength() !== 64) return;
+    updateValues('double64', val);
+});
+
+// UNIX Timestamp 32-bit input
+unixts32Input.addEventListener('input', (e) => {
+    let val = e.target.value.replace(/[^0-9]/g, '');
+    if (val === '') {
+        updateValues('unixts32', '');
+        return;
+    }
+    if (isNaN(Number(val))) return;
+    if (getBitLength() !== 32) return;
+    updateValues('unixts32', val);
+});
+
+// In updateValues, also update float/double/unix fields
 function updateValues(sourceId, sourceValue) {
     let decimalValue;
     let binStr = '';
@@ -353,6 +425,36 @@ function updateValues(sourceId, sourceValue) {
                     binStr = num.toString(2);
                 }
                 break;
+            case 'float32':
+                if (getBitLength() === 32 && /^[-+]?\d*\.?\d*(e[-+]?\d+)?$/.test(sourceValue) && sourceValue !== '' && !isNaN(Number(sourceValue))) {
+                    let f = parseFloat(sourceValue);
+                    let buf = new ArrayBuffer(4);
+                    new DataView(buf).setFloat32(0, f, false);
+                    let u32 = new DataView(buf).getUint32(0, false);
+                    binStr = u32.toString(2).padStart(32, '0');
+                    decimalValue = BigInt(u32);
+                }
+                break;
+            case 'double64':
+                if (getBitLength() === 64 && /^[-+]?\d*\.?\d*(e[-+]?\d+)?$/.test(sourceValue) && sourceValue !== '' && !isNaN(Number(sourceValue))) {
+                    let d = parseFloat(sourceValue);
+                    let buf = new ArrayBuffer(8);
+                    new DataView(buf).setFloat64(0, d, false);
+                    let hi = new DataView(buf).getUint32(0, false);
+                    let lo = new DataView(buf).getUint32(4, false);
+                    binStr = hi.toString(2).padStart(32, '0') + lo.toString(2).padStart(32, '0');
+                    decimalValue = BigInt('0b' + binStr);
+                }
+                break;
+            case 'unixts32':
+                if (getBitLength() === 32 && /^[0-9]+$/.test(sourceValue)) {
+                    let n = Number(sourceValue);
+                    if (n < 0) n = 0;
+                    if (n > 0xFFFFFFFF) n = 0xFFFFFFFF;
+                    binStr = n.toString(2).padStart(32, '0');
+                    decimalValue = BigInt(n);
+                }
+                break;
         }
     } catch (e) {
         decimalValue = undefined;
@@ -366,7 +468,6 @@ function updateValues(sourceId, sourceValue) {
         let octVal = BigInt('0b' + binStr.slice(-len)).toString(8);
         let decVal = decimalValue.toString();
 
-        // Remove leading zeros (but keep at least one digit)
         hexVal = hexVal.replace(/^0+(?!$)/, '');
         octVal = octVal.replace(/^0+(?!$)/, '');
         decVal = decVal.replace(/^0+(?!$)/, '');
@@ -382,10 +483,39 @@ function updateValues(sourceId, sourceValue) {
             renderBinaryBits(binStr);
         }
         if (sourceId !== 'octal') octalInput.value = octVal;
+
+        // Float 32-bit
+        if (len === 32) {
+            let u32 = parseInt(binStr.slice(-32), 2);
+            let buf = new ArrayBuffer(4);
+            new DataView(buf).setUint32(0, u32, false);
+            let f = new DataView(buf).getFloat32(0, false);
+            float32Input.value = isFinite(f) ? f.toString() : '';
+            // UNIX Timestamp
+            unixts32Input.value = u32.toString();
+        } else {
+            float32Input.value = '';
+            unixts32Input.value = '';
+        }
+        // Double 64-bit
+        if (len === 64) {
+            let hi = parseInt(binStr.slice(0, 32), 2);
+            let lo = parseInt(binStr.slice(32), 2);
+            let buf = new ArrayBuffer(8);
+            new DataView(buf).setUint32(0, hi, false);
+            new DataView(buf).setUint32(4, lo, false);
+            let d = new DataView(buf).getFloat64(0, false);
+            double64Input.value = isFinite(d) ? d.toString() : '';
+        } else {
+            double64Input.value = '';
+        }
     } else {
         clearAllInputs(sourceId);
         renderBinaryBits('0'.repeat(64));
         binaryStreamInput.value = '';
+        float32Input.value = '';
+        double64Input.value = '';
+        unixts32Input.value = '';
     }
 }
 
