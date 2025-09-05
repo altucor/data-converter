@@ -7,41 +7,42 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Mono&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace, sans-serif;
+            font-family: 'Inter', sans-serif;
         }
         /* Simple focus style for better accessibility */
         input:focus {
             box-shadow: 0 0 0 2px #60a5fa; /* blue-400 */
         }
         /* Use monospace for all converter fields */
-        #hexadecimal, #decimal, #octal, #binary, #binary-bits, #binary-bits * {
-            font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace, 'Inter', sans-serif !important;
+        input {
+            font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace;
+        }
+        #binary-bits * {
+             font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace;
         }
     </style>
 </head>
-<body class="bg-gray-900 flex items-center justify-center min-h-screen">
+<body class="bg-gray-900 flex items-center justify-center min-h-screen py-8">
 
     <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-2xl mx-4">
         
         <h1 class="text-3xl font-bold text-center text-white mb-2">Data Converter</h1>
-        <p class="text-center text-gray-400 mb-8">Convert between Hexadecimal, Decimal, Octal, Binary and other.</p>
+        <p class="text-center text-gray-400 mb-8">Convert between Hexadecimal, Decimal, Binary, Float, and more.</p>
 
         <div class="grid grid-cols-1 gap-6">
-            <!-- Signed Checkbox and Size Switch on the same line -->
+            <!-- Controls -->
             <div class="flex items-center gap-6 mb-2">
-                <!-- Signed Checkbox -->
                 <div class="flex items-center">
                     <input id="signed" type="checkbox" class="mr-2 accent-blue-500 w-5 h-5">
                     <label for="signed" class="text-gray-300 text-sm font-medium select-none cursor-pointer">Signed</label>
                 </div>
-                <!-- Size Switch -->
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-4 flex-wrap">
                     <label class="text-gray-300 text-sm font-medium">Size:</label>
                     <label class="flex items-center gap-1 cursor-pointer">
-                        <input type="radio" name="size" value="64" class="accent-blue-500" checked>
+                        <input type="radio" name="size" value="64" class="accent-blue-500">
                         <span class="text-gray-300 text-xs">QWORD</span>
                     </label>
                     <label class="flex items-center gap-1 cursor-pointer">
@@ -58,53 +59,63 @@
                     </label>
                 </div>
             </div>
-            <!-- Hexadecimal Input -->
-            <div>
-                <label for="hexadecimal" class="block mb-2 text-sm font-medium text-gray-300">Hexadecimal</label>
-                <input type="text" id="hexadecimal" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none uppercase" placeholder="e.g., FF">
+            
+            <!-- Integer Inputs -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="hexadecimal" class="block mb-2 text-sm font-medium text-gray-300">Hexadecimal</label>
+                    <input type="text" id="hexadecimal" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none uppercase" placeholder="e.g., FF">
+                </div>
+                <div>
+                    <label for="decimal" class="block mb-2 text-sm font-medium text-gray-300">Decimal</label>
+                    <input type="text" id="decimal" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none" placeholder="e.g., 255">
+                </div>
+                <div>
+                    <label for="octal" class="block mb-2 text-sm font-medium text-gray-300">Octal</label>
+                    <input type="text" id="octal" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none" placeholder="e.g., 377">
+                </div>
+                <div>
+                    <label for="binary-stream" class="block mb-2 text-sm font-medium text-gray-300">Binary Stream</label>
+                    <input type="text" id="binary-stream" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none" placeholder="e.g., 11001010">
+                </div>
             </div>
-
-            <!-- Decimal Input -->
+            
+            <!-- Interactive Binary Input -->
             <div>
-                <label for="decimal" class="block mb-2 text-sm font-medium text-gray-300">Decimal</label>
-                <input type="text" id="decimal" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none" placeholder="e.g., 255">
-            </div>
-
-            <!-- Octal Input -->
-            <div>
-                <label for="octal" class="block mb-2 text-sm font-medium text-gray-300">Octal</label>
-                <input type="text" id="octal" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none" placeholder="e.g., 377">
-            </div>
-
-            <!-- Binary Stream Input -->
-            <div>
-                <label for="binary-stream" class="block mb-2 text-sm font-medium text-gray-300">Binary Stream</label>
-                <input type="text" id="binary-stream" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none font-mono" placeholder="e.g., 11001010">
-            </div>
-
-            <!-- Binary Input -->
-            <div>
-                <label for="binary" class="block mb-2 text-sm font-medium text-gray-300">Binary</label>
+                <label for="binary" class="block mb-2 text-sm font-medium text-gray-300">Binary Bits</label>
                 <div id="binary-bits" class="flex flex-col gap-1 mb-2"></div>
                 <input type="text" id="binary" class="hidden" autocomplete="off">
             </div>
 
             <!-- Separator line -->
-            <div class="border-t border-gray-600 my-4"></div>
+            <div class="border-t border-gray-700 my-2"></div>
 
             <!-- Float/Double/Unix Timestamp Inputs -->
             <div class="grid grid-cols-1 gap-4">
-                <div>
-                    <label for="float32" class="block mb-2 text-sm font-medium text-gray-300">Float 32-bit</label>
-                    <input type="text" id="float32" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none font-mono" placeholder="e.g., 3.14">
+                <div id="floating-point-wrapper">
+                    <label for="floating-point" class="block mb-2 text-sm font-medium text-gray-300">Floating Point (IEEE 754)</label>
+                    <input type="text" id="floating-point" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none disabled:opacity-50" placeholder="Active for 32/64-bit">
                 </div>
-                <div>
-                    <label for="double64" class="block mb-2 text-sm font-medium text-gray-300">Double 64-bit</label>
-                    <input type="text" id="double64" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none font-mono" placeholder="e.g., 3.1415926535">
+                <div id="timestamp-wrapper">
+                    <label for="timestamp" class="block mb-2 text-sm font-medium text-gray-300">UNIX Timestamp (seconds)</label>
+                    <div class="flex items-center">
+                       <input type="text" id="timestamp" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none" placeholder="Epoch: 1970-01-01">
+                       <span id="timestamp-date" class="ml-4 text-gray-400 text-sm whitespace-nowrap"></span>
+                    </div>
                 </div>
-                <div>
-                    <label for="unixts32" class="block mb-2 text-sm font-medium text-gray-300">UNIX Timestamp 32-bit</label>
-                    <input type="text" id="unixts32" class="bg-gray-700 border-0 text-white text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 outline-none font-mono" placeholder="e.g., 1700000000">
+                 <div id="cocoa-timestamp-wrapper">
+                    <label for="cocoa-timestamp" class="block mb-2 text-sm font-medium text-gray-300">Cocoa Core Data Timestamp</label>
+                    <div class="flex items-center">
+                       <input type="text" id="cocoa-timestamp" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none" placeholder="Epoch: 2001-01-01">
+                       <span id="cocoa-timestamp-date" class="ml-4 text-gray-400 text-sm whitespace-nowrap"></span>
+                    </div>
+                </div>
+                <div id="hfs-timestamp-wrapper">
+                    <label for="hfs-timestamp" class="block mb-2 text-sm font-medium text-gray-300">Mac HFS+ Timestamp</label>
+                    <div class="flex items-center">
+                       <input type="text" id="hfs-timestamp" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none" placeholder="Epoch: 1904-01-01">
+                       <span id="hfs-timestamp-date" class="ml-4 text-gray-400 text-sm whitespace-nowrap"></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -112,421 +123,302 @@
     </div>
 
     <script>
-const decimalInput = document.getElementById('decimal');
-const hexadecimalInput = document.getElementById('hexadecimal');
-const binaryInput = document.getElementById('binary');
-const octalInput = document.getElementById('octal');
-const binaryStreamInput = document.getElementById('binary-stream');
-const binaryBitsDiv = document.getElementById('binary-bits');
-const signedCheckbox = document.getElementById('signed');
-const sizeRadios = document.querySelectorAll('input[name="size"]');
+        // --- DOM Elements ---
+        const decimalInput = document.getElementById('decimal');
+        const hexadecimalInput = document.getElementById('hexadecimal');
+        const binaryInput = document.getElementById('binary');
+        const octalInput = document.getElementById('octal');
+        const binaryStreamInput = document.getElementById('binary-stream');
+        const binaryBitsDiv = document.getElementById('binary-bits');
+        const signedCheckbox = document.getElementById('signed');
+        const sizeRadios = document.querySelectorAll('input[name="size"]');
+        const floatInput = document.getElementById('floating-point');
+        const timestampInput = document.getElementById('timestamp');
+        const timestampDate = document.getElementById('timestamp-date');
+        const cocoaTimestampInput = document.getElementById('cocoa-timestamp');
+        const cocoaTimestampDate = document.getElementById('cocoa-timestamp-date');
+        const hfsTimestampInput = document.getElementById('hfs-timestamp');
+        const hfsTimestampDate = document.getElementById('hfs-timestamp-date');
 
-const inputs = [decimalInput, hexadecimalInput, binaryInput, octalInput, binaryStreamInput];
+        const inputs = [decimalInput, hexadecimalInput, octalInput, binaryStreamInput, floatInput, timestampInput, cocoaTimestampInput, hfsTimestampInput];
 
-let bitLength = 64; // Default QWORD
+        // --- State & Constants ---
+        let bitLength = 64;
+        const COCOA_EPOCH_OFFSET = 978307200n; // Seconds between 1970 and 2001
+        const HFS_EPOCH_OFFSET = 2082844800n;   // Seconds between 1904 and 1970
 
-function getBitLength() {
-    return bitLength;
-}
+        // --- Helper Functions ---
+        const getBitLength = () => bitLength;
+        const padBinary = (bin, length = 64) => bin.padStart(length, '0');
 
-// Always show 64 bits, but only allow interaction for active bits
-function getActiveBitsMask() {
-    // Returns an array of 64 booleans, true if bit is active
-    const len = getBitLength();
-    const mask = Array(64).fill(false);
-    for (let i = 64 - len; i < 64; i++) mask[i] = true;
-    return mask;
-}
+        function setBitLength(newLength, triggerUpdate = false) {
+            bitLength = parseInt(newLength, 10);
+            document.querySelector(`input[name="size"][value="${bitLength}"]`).checked = true;
+            updateFieldStates();
+            if (triggerUpdate) {
+                let currentVal = decimalInput.value || '0';
+                updateValues('decimal', currentVal);
+            }
+        }
 
-// Helper to pad binary string to 64 bits
-function padBinary(bin, length = 64) {
-    return bin.padStart(length, '0');
-}
+        function updateFieldStates() {
+            const len = getBitLength();
+            floatInput.disabled = (len !== 32 && len !== 64);
+            if(floatInput.disabled) floatInput.value = '';
+        }
 
-// Render clickable binary bits, 4 lines of 16 bits, grouped by 4, MSB left, LSB right
-function renderBinaryBits(binStr) {
-    binStr = padBinary(binStr, 64).slice(-64);
-    binaryBitsDiv.innerHTML = '';
-    const mask = getActiveBitsMask();
+        function renderBinaryBits(binStr) {
+            binStr = padBinary(binStr, 64);
+            binaryBitsDiv.innerHTML = '';
+            const activeBitLength = getBitLength();
 
-    for (let line = 0; line < 4; line++) {
-        // Bits line
-        const lineDiv = document.createElement('div');
-        lineDiv.className = 'flex gap-4 justify-center items-end';
-
-        for (let group = 0; group < 4; group++) {
-            // Bits group
-            const groupDiv = document.createElement('div');
-            groupDiv.className = 'flex flex-col items-end';
-
-            // Bits row
-            const bitsRow = document.createElement('div');
-            bitsRow.className = 'flex gap-2';
-
-            for (let b = 0; b < 4; b++) {
-                const bitIdx = line * 16 + group * 4 + b;
-                const bit = binStr[bitIdx];
-                const isActive = mask[bitIdx];
-                const span = document.createElement('span');
-                span.textContent = bit;
-                span.className = `select-none px-1 py-0.5 rounded text-sm font-mono font-bold transition w-6 text-center
-                    ${bit === '1' ? 'bg-blue-500 text-white' : 'bg-gray-600 text-gray-200'}
-                    ${isActive ? 'cursor-pointer hover:ring-2 hover:ring-blue-400' : 'opacity-40 cursor-not-allowed'}`;
-                span.dataset.index = bitIdx;
-                if (isActive) {
-                    span.addEventListener('click', () => {
-                        let bitsArr = binStr.split('');
-                        bitsArr[bitIdx] = bitsArr[bitIdx] === '1' ? '0' : '1';
-                        let newBin = bitsArr.join('');
-                        let activeBits = newBin.slice(-bitLength);
-                        binaryInput.value = activeBits.replace(/^0+/, '') || '0';
-                        updateValues('binary', activeBits);
-                    });
+            for (let line = 0; line < 4; line++) {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'flex gap-4 justify-center items-end';
+                for (let group = 0; group < 4; group++) {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'flex flex-col items-end';
+                    const bitsRow = document.createElement('div');
+                    bitsRow.className = 'flex gap-2';
+                    for (let b = 0; b < 4; b++) {
+                        const bitIdx = line * 16 + group * 4 + b;
+                        const bit = binStr[bitIdx];
+                        const isActive = (64 - bitIdx) <= activeBitLength;
+                        const span = document.createElement('span');
+                        span.textContent = bit;
+                        span.className = `select-none px-1 py-0.5 rounded text-sm font-bold transition w-6 text-center
+                            ${bit === '1' ? 'bg-blue-500 text-white' : 'bg-gray-600 text-gray-200'}
+                            ${isActive ? 'cursor-pointer hover:ring-2 hover:ring-blue-400' : 'opacity-40 cursor-not-allowed'}`;
+                        if (isActive) {
+                            span.addEventListener('click', () => {
+                                let bitsArr = binStr.split('');
+                                bitsArr[bitIdx] = bitsArr[bitIdx] === '1' ? '0' : '1';
+                                let newBin = bitsArr.join('').slice(-activeBitLength);
+                                updateValues('binary', newBin);
+                            });
+                        }
+                        bitsRow.appendChild(span);
+                    }
+                    const groupStartBitIdx = line * 16 + group * 4;
+                    const lsbIdx = 63 - (groupStartBitIdx + 3);
+                    const idxLabel = document.createElement('span');
+                    idxLabel.textContent = lsbIdx;
+                    idxLabel.className = 'block text-xs text-gray-400 w-full text-right mt-0.5';
+                    groupDiv.appendChild(bitsRow);
+                    groupDiv.appendChild(idxLabel);
+                    lineDiv.appendChild(groupDiv);
                 }
-                bitsRow.appendChild(span);
+                binaryBitsDiv.appendChild(lineDiv);
+            }
+        }
+        
+        function clearAllInputs(skipId = null) {
+            inputs.forEach(input => {
+                if (input.id !== skipId) input.value = '';
+            });
+            timestampDate.textContent = '';
+            cocoaTimestampDate.textContent = '';
+            hfsTimestampDate.textContent = '';
+        }
+
+        // --- Core Conversion Logic ---
+        function updateValues(sourceId, sourceValue) {
+            if (sourceValue === '' || sourceValue === '-') {
+                clearAllInputs(sourceId);
+                renderBinaryBits('0');
+                return;
             }
 
-            // LSB index for this group (rightmost bit in group)
-            const groupStartBitIdx = line * 16 + group * 4;
-            const lsbIdx = 63 - (groupStartBitIdx + 3);
-            const idxLabel = document.createElement('span');
-            idxLabel.textContent = lsbIdx;
-            idxLabel.className = 'block text-xs text-gray-400 w-full text-right mt-0.5';
+            let decimalValue; // This will hold the UNIX timestamp equivalent for timestamp inputs
+            let binStr = '';
+            const isSigned = signedCheckbox.checked;
+            const len = getBitLength();
 
-            groupDiv.appendChild(bitsRow);
-            groupDiv.appendChild(idxLabel);
-
-            lineDiv.appendChild(groupDiv);
-        }
-        binaryBitsDiv.appendChild(lineDiv);
-    }
-}
-
-// Render static LSB indexes under each 4-bit group
-function renderBinaryIndexes() {
-    binaryIndexesDiv.innerHTML = '';
-    for (let line = 0; line < 4; line++) {
-        const lineDiv = document.createElement('div');
-        lineDiv.className = 'flex gap-4 justify-center';
-        for (let group = 0; group < 4; group++) {
-            const groupDiv = document.createElement('div');
-            groupDiv.className = 'flex flex-col items-end w-[4.5em]';
-            const empty = document.createElement('span');
-            empty.className = 'block h-0';
-            groupDiv.appendChild(empty);
-            // LSB index for this group
-            const bitIdx = line * 16 + group * 4;
-            const lsbIdx = 63 - bitIdx - 3;
-            const idxLabel = document.createElement('span');
-            idxLabel.textContent = lsbIdx;
-            idxLabel.className = 'block text-xs text-gray-400 w-full text-right';
-            groupDiv.appendChild(idxLabel);
-            lineDiv.appendChild(groupDiv);
-        }
-        binaryIndexesDiv.appendChild(lineDiv);
-    }
-}
-
-// Input filters
-hexadecimalInput.addEventListener('input', (e) => {
-    // Accept both lowercase and uppercase A-F, and allow pasting
-    let val = e.target.value;
-    // Only keep valid hex chars, then uppercase
-    val = val.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
-    // Limit to max hex digits for current bit length
-    val = val.slice(0, getBitLength() / 4);
-    // Set value and update
-    if (hexadecimalInput.value !== val) hexadecimalInput.value = val;
-    updateValues('hexadecimal', val);
-});
-decimalInput.addEventListener('input', (e) => {
-    let isSigned = signedCheckbox.checked;
-    let maxLen = getBitLength();
-    let max = isSigned ? (2n ** BigInt(maxLen - 1n) - 1n) : (2n ** BigInt(maxLen) - 1n);
-    let min = isSigned ? -(2n ** BigInt(maxLen - 1n)) : 0n;
-    let val = e.target.value.replace(/[^0-9\-]/g, '');
-    if (isSigned && val.startsWith('-')) {
-        val = '-' + val.slice(1).replace(/-/g, '');
-    } else {
-        val = val.replace(/-/g, '');
-    }
-    // Clamp value
-    try {
-        let n = BigInt(val || '0');
-        if (n > max) n = max;
-        if (n < min) n = min;
-        decimalInput.value = n.toString();
-        updateValues('decimal', n.toString());
-    } catch {
-        decimalInput.value = '';
-        updateValues('decimal', '');
-    }
-});
-octalInput.addEventListener('input', (e) => {
-    let val = e.target.value.replace(/[^0-7]/g, '').slice(0, Math.ceil(getBitLength() / 3));
-    octalInput.value = val;
-    updateValues('octal', val);
-});
-binaryInput.addEventListener('input', (e) => {
-    let val = e.target.value.replace(/[^01]/g, '').slice(-getBitLength());
-    binaryInput.value = val;
-    updateValues('binary', val);
-});
-
-// Binary Stream input: mirror binary bits, allow copy/paste
-binaryStreamInput.addEventListener('input', (e) => {
-    let val = e.target.value.replace(/[^01]/g, '').slice(-getBitLength());
-    binaryStreamInput.value = val;
-    binaryInput.value = val;
-    updateValues('binary', val);
-});
-
-// Add event listener to all input fields except binary (handled separately above)
-[decimalInput].forEach(input => {
-    input.addEventListener('blur', (e) => {
-        updateValues('decimal', input.value);
-    });
-});
-
-// Signed checkbox triggers recalculation
-signedCheckbox.addEventListener('change', () => {
-    let binVal = binaryInput.value || '0';
-    updateValues('binary', binVal);
-});
-
-// Size radio triggers recalculation and limits
-sizeRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-        bitLength = parseInt(document.querySelector('input[name="size"]:checked').value, 10);
-        let binVal = padBinary(binaryInput.value || '0', bitLength).slice(-bitLength);
-        binaryInput.value = binVal.replace(/^0+/, '') || '0';
-        updateValues('binary', binVal);
-    });
-});
-
-// Initial render
-renderBinaryBits('0'.repeat(64));
-
-const float32Input = document.getElementById('float32');
-const double64Input = document.getElementById('double64');
-const unixts32Input = document.getElementById('unixts32');
-
-// Float 32-bit input
-float32Input.addEventListener('input', (e) => {
-    // Accept both dot and comma as decimal separator
-    let val = e.target.value.trim().replace(',', '.');
-    // Accept valid float numbers (including scientific notation)
-    if (!/^[-+]?\d*(?:[.,]?\d*)?(?:[eE][-+]?\d+)?$/.test(e.target.value.trim()) && e.target.value.trim() !== '') {
-        // Still allow clearing the field
-        updateValues('float32', '');
-        return;
-    }
-    // Allow empty field
-    if (val === '') {
-        updateValues('float32', '');
-        return;
-    }
-    if (isNaN(Number(val))) return;
-    if (getBitLength() !== 32) return;
-    updateValues('float32', val);
-});
-
-// Double 64-bit input
-double64Input.addEventListener('input', (e) => {
-    let val = e.target.value.trim().replace(',', '.');
-    if (!/^[-+]?\d*(?:[.,]?\d*)?(?:[eE][-+]?\d+)?$/.test(e.target.value.trim()) && e.target.value.trim() !== '') {
-        updateValues('double64', '');
-        return;
-    }
-    if (val === '') {
-        updateValues('double64', '');
-        return;
-    }
-    if (isNaN(Number(val))) return;
-    if (getBitLength() !== 64) return;
-    updateValues('double64', val);
-});
-
-// UNIX Timestamp 32-bit input
-unixts32Input.addEventListener('input', (e) => {
-    let val = e.target.value.replace(/[^0-9]/g, '');
-    if (val === '') {
-        updateValues('unixts32', '');
-        return;
-    }
-    if (isNaN(Number(val))) return;
-    if (getBitLength() !== 32) return;
-    updateValues('unixts32', val);
-});
-
-// In updateValues, also update float/double/unix fields
-function updateValues(sourceId, sourceValue) {
-    let decimalValue;
-    let binStr = '';
-    let isSigned = signedCheckbox.checked;
-    let len = getBitLength();
-
-    try {
-        switch (sourceId) {
-            case 'decimal':
-                if (/^-?\d+$/.test(sourceValue)) {
-                    let num = BigInt(sourceValue);
-                    if (isSigned) {
-                        let min = -(2n ** BigInt(len - 1));
-                        let max = 2n ** BigInt(len - 1) - 1n;
-                        if (num < min) num = min;
-                        if (num > max) num = max;
-                        decimalValue = num;
-                        binStr = (num < 0 ? (num + 2n ** BigInt(len)) : num).toString(2);
-                    } else {
-                        let min = 0n;
-                        let max = 2n ** BigInt(len) - 1n;
-                        if (num < min) num = min;
-                        if (num > max) num = max;
-                        decimalValue = num;
-                        binStr = num.toString(2);
-                    }
+            try {
+                let unixTimestamp;
+                switch (sourceId) {
+                    case 'decimal':
+                    case 'timestamp':
+                        if (/^-?\d+$/.test(sourceValue)) {
+                            unixTimestamp = BigInt(sourceValue);
+                        }
+                        break;
+                    case 'cocoa-timestamp':
+                         if (/^-?\d+$/.test(sourceValue)) {
+                            unixTimestamp = BigInt(sourceValue) + COCOA_EPOCH_OFFSET;
+                        }
+                        break;
+                    case 'hfs-timestamp':
+                        if (/^-?\d+$/.test(sourceValue)) {
+                            unixTimestamp = BigInt(sourceValue) - HFS_EPOCH_OFFSET;
+                        }
+                        break;
+                    case 'hexadecimal':
+                        if (/^[0-9A-Fa-f]+$/.test(sourceValue)) {
+                            let num = BigInt('0x' + sourceValue);
+                            binStr = num.toString(2);
+                            if (isSigned && num >= 2n ** BigInt(len - 1)) {
+                                decimalValue = num - 2n ** BigInt(len);
+                            } else {
+                                decimalValue = num;
+                            }
+                        }
+                        break;
+                    case 'binary':
+                    case 'binary-stream':
+                        if (/^[01]+$/.test(sourceValue)) {
+                            binStr = sourceValue;
+                            let num = BigInt('0b' + padBinary(binStr, len).slice(-len));
+                            if (isSigned && binStr.padStart(len, '0')[0] === '1') {
+                                decimalValue = num - 2n ** BigInt(len);
+                            } else {
+                                decimalValue = num;
+                            }
+                        }
+                        break;
+                    case 'octal':
+                        if (/^[0-7]+$/.test(sourceValue)) {
+                            let num = BigInt('0o' + sourceValue);
+                            binStr = num.toString(2);
+                            if (isSigned && num >= 2n ** BigInt(len - 1)) {
+                                decimalValue = num - 2n ** BigInt(len);
+                            } else {
+                                decimalValue = num;
+                            }
+                        }
+                        break;
+                    case 'floating-point':
+                        if (!isNaN(parseFloat(sourceValue))) {
+                           if (len === 32) {
+                                let buf = new ArrayBuffer(4);
+                                new DataView(buf).setFloat32(0, parseFloat(sourceValue), false);
+                                let u32 = new DataView(buf).getUint32(0, false);
+                                binStr = u32.toString(2);
+                                decimalValue = isSigned ? BigInt(u32 << 32 >> 32) : BigInt(u32);
+                           } else if (len === 64) {
+                                let buf = new ArrayBuffer(8);
+                                new DataView(buf).setFloat64(0, parseFloat(sourceValue), false);
+                                let u64 = new DataView(buf).getBigUint64(0, false);
+                                binStr = u64.toString(2);
+                                decimalValue = isSigned ? new DataView(buf).getBigInt64(0, false) : u64;
+                           }
+                        }
+                        break;
                 }
-                break;
-            case 'hexadecimal':
-                if (/^[0-9A-Fa-f]+$/.test(sourceValue)) {
-                    let num = BigInt('0x' + sourceValue);
-                    num = num & (2n ** BigInt(len) - 1n);
-                    if (isSigned && num >= 2n ** BigInt(len - 1)) {
-                        decimalValue = num - 2n ** BigInt(len);
-                    } else {
-                        decimalValue = num;
-                    }
-                    binStr = num.toString(2);
+                
+                if (typeof unixTimestamp !== 'undefined') {
+                    decimalValue = unixTimestamp;
+                    binStr = (isSigned && unixTimestamp < 0 ? unixTimestamp + (2n ** BigInt(len)) : unixTimestamp).toString(2);
                 }
-                break;
-            case 'binary':
-            case 'binary-stream':
-                if (/^[01]+$/.test(sourceValue)) {
-                    let bin = padBinary(sourceValue, len).slice(-len);
-                    let num = BigInt('0b' + bin);
-                    if (isSigned && bin[0] === '1') {
-                        decimalValue = num - 2n ** BigInt(len);
-                    } else {
-                        decimalValue = num;
-                    }
-                    binStr = bin;
+
+            } catch (e) { console.error(e); }
+
+            if (typeof decimalValue !== 'undefined') {
+                binStr = padBinary(binStr, 64);
+                const activeBinStr = binStr.slice(-len);
+                
+                // Update integer fields
+                if (sourceId !== 'decimal' && sourceId !== 'timestamp' && sourceId !== 'cocoa-timestamp' && sourceId !== 'hfs-timestamp') {
+                    decimalInput.value = decimalValue.toString();
                 }
-                break;
-            case 'octal':
-                if (/^[0-7]+$/.test(sourceValue)) {
-                    let num = BigInt('0o' + sourceValue);
-                    num = num & (2n ** BigInt(len) - 1n);
-                    if (isSigned && num >= 2n ** BigInt(len - 1)) {
-                        decimalValue = num - 2n ** BigInt(len);
-                    } else {
-                        decimalValue = num;
-                    }
-                    binStr = num.toString(2);
-                }
-                break;
-            case 'float32':
-                if (getBitLength() === 32 && /^[-+]?\d*\.?\d*(e[-+]?\d+)?$/.test(sourceValue) && sourceValue !== '' && !isNaN(Number(sourceValue))) {
-                    let f = parseFloat(sourceValue);
+                if (sourceId !== 'hexadecimal') hexadecimalInput.value = BigInt('0b' + activeBinStr).toString(16).toUpperCase();
+                if (sourceId !== 'octal') octalInput.value = BigInt('0b' + activeBinStr).toString(8);
+
+                // Update binary fields
+                const displayBinStr = activeBinStr.replace(/^0+(?!$)/, '') || '0';
+                binaryInput.value = displayBinStr;
+                if (sourceId !== 'binary-stream') binaryStreamInput.value = displayBinStr;
+                renderBinaryBits(binStr);
+
+                // Update float field
+                if (len === 32) {
+                    let u32 = parseInt(binStr.slice(-32), 2);
                     let buf = new ArrayBuffer(4);
-                    new DataView(buf).setFloat32(0, f, false);
-                    let u32 = new DataView(buf).getUint32(0, false);
-                    binStr = u32.toString(2).padStart(32, '0');
-                    decimalValue = BigInt(u32);
-                }
-                break;
-            case 'double64':
-                if (getBitLength() === 64 && /^[-+]?\d*\.?\d*(e[-+]?\d+)?$/.test(sourceValue) && sourceValue !== '' && !isNaN(Number(sourceValue))) {
-                    let d = parseFloat(sourceValue);
+                    new DataView(buf).setUint32(0, u32, false);
+                    let f = new DataView(buf).getFloat32(0, false);
+                    if (sourceId !== 'floating-point') floatInput.value = isFinite(f) ? f.toString() : 'NaN';
+                } else if (len === 64) {
                     let buf = new ArrayBuffer(8);
-                    new DataView(buf).setFloat64(0, d, false);
-                    let hi = new DataView(buf).getUint32(0, false);
-                    let lo = new DataView(buf).getUint32(4, false);
-                    binStr = hi.toString(2).padStart(32, '0') + lo.toString(2).padStart(32, '0');
-                    decimalValue = BigInt('0b' + binStr);
+                    new DataView(buf).setBigUint64(0, BigInt('0b' + binStr), false);
+                    let d = new DataView(buf).getFloat64(0, false);
+                    if (sourceId !== 'floating-point') floatInput.value = isFinite(d) ? d.toString() : 'NaN';
+                } else {
+                    if (sourceId !== 'floating-point') floatInput.value = '';
                 }
-                break;
-            case 'unixts32':
-                if (getBitLength() === 32 && /^[0-9]+$/.test(sourceValue)) {
-                    let n = Number(sourceValue);
-                    if (n < 0) n = 0;
-                    if (n > 0xFFFFFFFF) n = 0xFFFFFFFF;
-                    binStr = n.toString(2).padStart(32, '0');
-                    decimalValue = BigInt(n);
+
+                // Update timestamp for all sizes
+                const unsignedVal = BigInt('0b' + activeBinStr);
+                const valForTimestamp = isSigned ? decimalValue : unsignedVal;
+
+                if (sourceId !== 'timestamp') timestampInput.value = valForTimestamp.toString();
+                if (sourceId !== 'cocoa-timestamp') cocoaTimestampInput.value = (valForTimestamp - COCOA_EPOCH_OFFSET).toString();
+                if (sourceId !== 'hfs-timestamp') hfsTimestampInput.value = (valForTimestamp + HFS_EPOCH_OFFSET).toString();
+                
+                try {
+                    const date = new Date(Number(valForTimestamp) * 1000);
+                    const dateString = isNaN(date.getTime()) ? '' : `(${date.toUTCString()})`;
+                    timestampDate.textContent = dateString;
+                    cocoaTimestampDate.textContent = dateString;
+                    hfsTimestampDate.textContent = dateString;
+                } catch {
+                    const errorMsg = '(Date too large)';
+                    timestampDate.textContent = errorMsg;
+                    cocoaTimestampDate.textContent = errorMsg;
+                    hfsTimestampDate.textContent = errorMsg;
                 }
-                break;
+            } else {
+                clearAllInputs(sourceId);
+            }
         }
-    } catch (e) {
-        decimalValue = undefined;
-    }
-
-    if (typeof decimalValue !== 'undefined' && decimalValue !== null) {
-        binStr = padBinary(binStr, 64).slice(-64);
-
-        // Remove leading zeros for display (but keep at least one digit)
-        let hexVal = BigInt('0b' + binStr.slice(-len)).toString(16).toUpperCase();
-        let octVal = BigInt('0b' + binStr.slice(-len)).toString(8);
-        let decVal = decimalValue.toString();
-
-        hexVal = hexVal.replace(/^0+(?!$)/, '');
-        octVal = octVal.replace(/^0+(?!$)/, '');
-        decVal = decVal.replace(/^0+(?!$)/, '');
-
-        if (sourceId !== 'decimal') decimalInput.value = decVal;
-        if (sourceId !== 'hexadecimal') hexadecimalInput.value = hexVal;
-        if (sourceId !== 'binary') {
-            binaryInput.value = binStr.slice(-len).replace(/^0+(?!$)/, '') || '0';
-            binaryStreamInput.value = binStr.slice(-len).replace(/^0+(?!$)/, '') || '0';
-            renderBinaryBits(binStr);
-        } else {
-            binaryStreamInput.value = binStr.slice(-len).replace(/^0+(?!$)/, '') || '0';
-            renderBinaryBits(binStr);
+        
+        // --- Event Listener Helpers ---
+        function createIntegerInputHandler(id) {
+            return (e) => {
+                let val = e.target.value;
+                let filter, maxLen;
+                switch(id) {
+                    case 'hexadecimal': filter = /[^0-9a-fA-F]/g; maxLen = getBitLength() / 4; break;
+                    case 'decimal': filter = /[^0-9\-]/g; break;
+                    case 'octal': filter = /[^0-7]/g; maxLen = Math.ceil(getBitLength() / 3); break;
+                    case 'binary-stream': filter = /[^01]/g; maxLen = getBitLength(); break;
+                }
+                val = val.replace(filter, '');
+                if (id === 'decimal' && val.lastIndexOf('-') > 0) val = '-' + val.replace(/-/g, '');
+                if (maxLen) val = val.slice(0, maxLen);
+                e.target.value = val;
+                updateValues(id, val);
+            };
         }
-        if (sourceId !== 'octal') octalInput.value = octVal;
 
-        // Float 32-bit
-        if (len === 32) {
-            let u32 = parseInt(binStr.slice(-32), 2);
-            let buf = new ArrayBuffer(4);
-            new DataView(buf).setUint32(0, u32, false);
-            let f = new DataView(buf).getFloat32(0, false);
-            float32Input.value = isFinite(f) ? f.toString() : '';
-            // UNIX Timestamp
-            unixts32Input.value = u32.toString();
-        } else {
-            float32Input.value = '';
-            unixts32Input.value = '';
+        function createTimestampInputHandler(id) {
+             return (e) => {
+                let val = e.target.value.replace(/[^0-9\-]/g, '');
+                if (val.lastIndexOf('-') > 0) val = '-' + val.replace(/-/g, '');
+                e.target.value = val;
+                updateValues(id, val);
+            };
         }
-        // Double 64-bit
-        if (len === 64) {
-            let hi = parseInt(binStr.slice(0, 32), 2);
-            let lo = parseInt(binStr.slice(32), 2);
-            let buf = new ArrayBuffer(8);
-            new DataView(buf).setUint32(0, hi, false);
-            new DataView(buf).setUint32(4, lo, false);
-            let d = new DataView(buf).getFloat64(0, false);
-            double64Input.value = isFinite(d) ? d.toString() : '';
-        } else {
-            double64Input.value = '';
-        }
-    } else {
-        clearAllInputs(sourceId);
-        renderBinaryBits('0'.repeat(64));
-        binaryStreamInput.value = '';
-        float32Input.value = '';
-        double64Input.value = '';
-        unixts32Input.value = '';
-    }
-}
 
-function clearAllInputs(skipId = null) {
-    inputs.forEach(input => {
-        if (input.id !== skipId) {
-            input.value = '';
-        }
-    });
-}
-</script>
+        // --- Event Listeners ---
+        hexadecimalInput.addEventListener('input', createIntegerInputHandler('hexadecimal'));
+        decimalInput.addEventListener('input', createIntegerInputHandler('decimal'));
+        octalInput.addEventListener('input', createIntegerInputHandler('octal'));
+        binaryStreamInput.addEventListener('input', createIntegerInputHandler('binary-stream'));
+
+        floatInput.addEventListener('input', (e) => updateValues('floating-point', e.target.value));
+        
+        timestampInput.addEventListener('input', createTimestampInputHandler('timestamp'));
+        cocoaTimestampInput.addEventListener('input', createTimestampInputHandler('cocoa-timestamp'));
+        hfsTimestampInput.addEventListener('input', createTimestampInputHandler('hfs-timestamp'));
+
+        signedCheckbox.addEventListener('change', () => updateValues('decimal', decimalInput.value || '0'));
+        sizeRadios.forEach(radio => radio.addEventListener('change', (e) => setBitLength(e.target.value, true)));
+
+        // --- Initial Setup ---
+        setBitLength(64);
+        renderBinaryBits('0');
+
+    </script>
 </body>
 </html>
 
