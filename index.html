@@ -65,10 +65,14 @@
             </div>
             
             <!-- Integer Inputs -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 gap-6">
                 <div>
                     <label for="hexadecimal" class="block mb-2 text-sm font-medium text-gray-300">Hexadecimal</label>
                     <input type="text" id="hexadecimal" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none uppercase" placeholder="e.g., FF">
+                </div>
+                <div>
+                    <label for="hexadecimal-swapped" class="block mb-2 text-sm font-medium text-gray-300">Hexadecimal (byte-swapped)</label>
+                    <input type="text" id="hexadecimal-swapped" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none uppercase" placeholder="e.g., FF">
                 </div>
                 <div>
                     <label for="decimal" class="block mb-2 text-sm font-medium text-gray-300">Decimal</label>
@@ -130,6 +134,7 @@
         // --- DOM Elements ---
         const decimalInput = document.getElementById('decimal');
         const hexadecimalInput = document.getElementById('hexadecimal');
+        const hexSwappedInput = document.getElementById('hexadecimal-swapped');
         const binaryInput = document.getElementById('binary');
         const octalInput = document.getElementById('octal');
         const binaryStreamInput = document.getElementById('binary-stream');
@@ -155,6 +160,14 @@
         // --- Helper Functions ---
         const getBitLength = () => bitLength;
         const padBinary = (bin, length = 64) => bin.padStart(length, '0');
+
+        function swapBytes(hexString, bits) {
+            if (!hexString) return '';
+            const hexLen = bits / 4;
+            const paddedHex = hexString.padStart(hexLen, '0');
+            const bytes = paddedHex.match(/.{1,2}/g) || [];
+            return bytes.reverse().join('');
+        }
 
         function setBitLength(newLength, triggerUpdate = false) {
             bitLength = parseInt(newLength, 10);
@@ -217,7 +230,7 @@
         }
         
         function clearAllInputs(skipId = null) {
-            const inputs = [decimalInput, hexadecimalInput, octalInput, binaryStreamInput, floatInput, unixDate, unixTime, cocoaDate, cocoaTime, hfsDate, hfsTime];
+            const inputs = [decimalInput, hexadecimalInput, hexSwappedInput, octalInput, binaryStreamInput, floatInput, unixDate, unixTime, cocoaDate, cocoaTime, hfsDate, hfsTime];
             inputs.forEach(input => { if (input.id !== skipId) input.value = ''; });
         }
 
@@ -252,13 +265,19 @@
             const len = getBitLength();
 
             try {
+                let normalHex;
                 switch (sourceId) {
                     case 'decimal':
                         if (/^-?\d+$/.test(sourceValue)) decimalValue = BigInt(sourceValue);
                         break;
+                    case 'hexadecimal-swapped':
+                        if (/^[0-9A-Fa-f]*$/.test(sourceValue)) {
+                             normalHex = swapBytes(sourceValue, len);
+                        }
+                        // Fallthrough to hexadecimal case with the un-swapped value
                     case 'hexadecimal':
-                        if (/^[0-9A-Fa-f]+$/.test(sourceValue)) {
-                            let num = BigInt('0x' + sourceValue);
+                        if (/^[0-9A-Fa-f]+$/.test(normalHex || sourceValue)) {
+                            let num = BigInt('0x' + (normalHex || sourceValue));
                             decimalValue = isSigned && num >= 2n ** BigInt(len - 1) ? num - 2n ** BigInt(len) : num;
                         }
                         break;
@@ -276,7 +295,7 @@
                         }
                         break;
                     case 'floating-point':
-                        if (!isNaN(parseFloat(sourceValue))) {
+                         if (!isNaN(parseFloat(sourceValue)) && isFinite(sourceValue)) {
                            if (len === 32) {
                                 let buf = new ArrayBuffer(4);
                                 new DataView(buf).setFloat32(0, parseFloat(sourceValue), false);
@@ -298,7 +317,11 @@
                 const activeBinStr = binStr.slice(-len);
 
                 decimalInput.value = decimalValue.toString();
-                if (sourceId !== 'hexadecimal') hexadecimalInput.value = BigInt('0b' + activeBinStr).toString(16).toUpperCase();
+                
+                const normalHexValue = BigInt('0b' + activeBinStr).toString(16).toUpperCase();
+                if (sourceId !== 'hexadecimal') hexadecimalInput.value = normalHexValue;
+                if (sourceId !== 'hexadecimal-swapped') hexSwappedInput.value = swapBytes(normalHexValue, len);
+
                 if (sourceId !== 'octal') octalInput.value = BigInt('0b' + activeBinStr).toString(8);
 
                 const displayBinStr = activeBinStr.replace(/^0+(?!$)/, '') || '0';
@@ -342,8 +365,6 @@
         }
         
         // --- Event Listener Helpers ---
-        function createIntegerInputHandler(id) { return (e) => updateValues(id, e.target.value); }
-
         function createDateTimeHandler(dateEl, timeEl, epochOffset = 0n) {
             return () => {
                 if (isUpdatingDateTime) return;
@@ -359,11 +380,87 @@
         }
 
         // --- Event Listeners ---
-        hexadecimalInput.addEventListener('input', createIntegerInputHandler('hexadecimal'));
-        decimalInput.addEventListener('input', createIntegerInputHandler('decimal'));
-        octalInput.addEventListener('input', createIntegerInputHandler('octal'));
-        binaryStreamInput.addEventListener('input', createIntegerInputHandler('binary-stream'));
-        floatInput.addEventListener('input', (e) => updateValues('floating-point', e.target.value));
+        hexadecimalInput.addEventListener('input', (e) => {
+            const input = e.target;
+            const originalValue = input.value;
+            const cursorPos = input.selectionStart;
+            const sanitizedValue = originalValue.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
+            if (originalValue !== sanitizedValue) {
+                input.value = sanitizedValue;
+                const diff = originalValue.length - sanitizedValue.length;
+                input.setSelectionRange(cursorPos - diff, cursorPos - diff);
+            }
+            updateValues('hexadecimal', sanitizedValue);
+        });
+
+        hexSwappedInput.addEventListener('input', (e) => {
+            const input = e.target;
+            const originalValue = input.value;
+            const cursorPos = input.selectionStart;
+            const sanitizedValue = originalValue.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
+            if (originalValue !== sanitizedValue) {
+                input.value = sanitizedValue;
+                const diff = originalValue.length - sanitizedValue.length;
+                input.setSelectionRange(cursorPos - diff, cursorPos - diff);
+            }
+            updateValues('hexadecimal-swapped', sanitizedValue);
+        });
+
+        decimalInput.addEventListener('input', (e) => {
+            const input = e.target;
+            const originalValue = input.value;
+            const cursorPos = input.selectionStart;
+            let sanitizedValue = originalValue.replace(/[^-0-9]/g, '');
+            if (sanitizedValue.lastIndexOf('-') > 0) {
+                sanitizedValue = sanitizedValue.charAt(0) + sanitizedValue.slice(1).replace(/-/g, "");
+            }
+            if (originalValue !== sanitizedValue) {
+                input.value = sanitizedValue;
+                const diff = originalValue.length - sanitizedValue.length;
+                input.setSelectionRange(cursorPos - diff, cursorPos - diff);
+            }
+            updateValues('decimal', sanitizedValue);
+        });
+
+        octalInput.addEventListener('input', (e) => {
+            const input = e.target;
+            const originalValue = input.value;
+            const cursorPos = input.selectionStart;
+            const sanitizedValue = originalValue.replace(/[^0-7]/g, '');
+            if (originalValue !== sanitizedValue) {
+                input.value = sanitizedValue;
+                const diff = originalValue.length - sanitizedValue.length;
+                input.setSelectionRange(cursorPos - diff, cursorPos - diff);
+            }
+            updateValues('octal', sanitizedValue);
+        });
+
+        binaryStreamInput.addEventListener('input', (e) => {
+            const input = e.target;
+            const originalValue = input.value;
+            const cursorPos = input.selectionStart;
+            const sanitizedValue = originalValue.replace(/[^01]/g, '');
+            if (originalValue !== sanitizedValue) {
+                input.value = sanitizedValue;
+                const diff = originalValue.length - sanitizedValue.length;
+                input.setSelectionRange(cursorPos - diff, cursorPos - diff);
+            }
+            updateValues('binary-stream', sanitizedValue);
+        });
+
+        floatInput.addEventListener('input', (e) => {
+            const input = e.target;
+            const originalValue = input.value;
+            const cursorPos = input.selectionStart;
+            // Basic filter for invalid characters. Does not prevent all invalid float formats (e.g. "1.2.3").
+            const sanitizedValue = originalValue.replace(/[^0-9.eE+-]/g, '');
+            if (originalValue !== sanitizedValue) {
+                input.value = sanitizedValue;
+                const diff = originalValue.length - sanitizedValue.length;
+                input.setSelectionRange(cursorPos - diff, cursorPos - diff);
+            }
+            updateValues('floating-point', sanitizedValue);
+        });
         
         const unixHandler = createDateTimeHandler(unixDate, unixTime, 0n);
         unixDate.addEventListener('input', unixHandler);
