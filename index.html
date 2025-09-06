@@ -144,6 +144,10 @@
                         <input type="text" id="rgb-hex-text" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none uppercase disabled:opacity-50" placeholder="Active for 32-bit">
                     </div>
                 </div>
+                 <div>
+                    <label for="ascii-text" class="block mb-2 text-sm font-medium text-gray-300">ASCII</label>
+                    <input type="text" id="ascii-text" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none" placeholder="e.g., Hello">
+                </div>
             </div>
         </div>
 
@@ -158,6 +162,7 @@
         const octalInput = document.getElementById('octal');
         const binaryStreamInput = document.getElementById('binary-stream');
         const ipv4Input = document.getElementById('ipv4-address');
+        const asciiInput = document.getElementById('ascii-text');
         const binaryBitsDiv = document.getElementById('binary-bits');
         const signedCheckbox = document.getElementById('signed');
         const sizeRadios = document.querySelectorAll('input[name="size"]');
@@ -262,7 +267,7 @@
         }
         
         function clearAllInputs(skipId = null) {
-            const inputs = [decimalInput, hexadecimalInput, hexSwappedInput, octalInput, binaryStreamInput, ipv4Input, floatInput, rgbHexText, unixDate, unixTime, cocoaDate, cocoaTime, hfsDate, hfsTime];
+            const inputs = [decimalInput, hexadecimalInput, hexSwappedInput, octalInput, binaryStreamInput, ipv4Input, floatInput, rgbHexText, asciiInput, unixDate, unixTime, cocoaDate, cocoaTime, hfsDate, hfsTime];
             inputs.forEach(input => { if (input.id !== skipId) input.value = ''; });
             if (skipId !== 'rgb-color-picker') rgbColorPicker.value = '#000000';
         }
@@ -345,6 +350,20 @@
                             }
                          }
                          break;
+                    case 'ascii-text':
+                        let asciiBinStr = '';
+                        for (let i = 0; i < sourceValue.length; i++) {
+                            const charCode = sourceValue.charCodeAt(i);
+                            asciiBinStr += charCode.toString(2).padStart(8, '0');
+                        }
+                        if (asciiBinStr.length > len) {
+                            asciiBinStr = asciiBinStr.slice(asciiBinStr.length - len);
+                        } else {
+                            asciiBinStr = asciiBinStr.padStart(len, '0');
+                        }
+                        const numFromAscii = BigInt('0b' + asciiBinStr);
+                        decimalValue = isSigned && asciiBinStr[0] === '1' ? numFromAscii - 2n ** BigInt(len) : numFromAscii;
+                        break;
                     case 'floating-point':
                          if (!isNaN(parseFloat(sourceValue)) && isFinite(sourceValue)) {
                            if (len === 32) {
@@ -379,6 +398,20 @@
                 if (sourceId !== 'binary') binaryInput.value = displayBinStr;
                 if (sourceId !== 'binary-stream') binaryStreamInput.value = displayBinStr;
                 renderBinaryBits(binStr);
+
+                // ASCII Update
+                let asciiString = '';
+                const hexForAscii = BigInt('0b' + activeBinStr).toString(16).padStart(len / 4, '0');
+                for (let i = 0; i < hexForAscii.length; i += 2) {
+                    const byteHex = hexForAscii.substring(i, i + 2);
+                    const byteDec = parseInt(byteHex, 16);
+                    if (byteDec >= 32 && byteDec <= 126) {
+                        asciiString += String.fromCharCode(byteDec);
+                    } else {
+                        asciiString += '.';
+                    }
+                }
+                if (sourceId !== 'ascii-text') asciiInput.value = asciiString;
                 
                 if (len === 32) {
                     const num32 = BigInt.asUintN(32, BigInt('0b' + activeBinStr));
@@ -499,6 +532,16 @@
         addSanitizingListener(ipv4Input, /[^0-9.]/g, 'ipv4-address');
         addSanitizingListener(floatInput, /[^0-9.eE+-]/g, 'floating-point');
         addSanitizingListener(rgbHexText, /[^0-9a-fA-F]/g, 'rgb-hex-text');
+
+        asciiInput.addEventListener('input', (e) => {
+            const input = e.target;
+            const value = input.value;
+            const maxChars = getBitLength() / 8;
+            if (value.length > maxChars) {
+                input.value = value.substring(0, maxChars);
+            }
+            updateValues('ascii-text', input.value);
+        });
 
         rgbColorPicker.addEventListener('input', (e) => {
             const hex = e.target.value.substring(1).toUpperCase();
