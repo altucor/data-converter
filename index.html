@@ -27,6 +27,14 @@
         input[type="date"], input[type="time"] {
             color-scheme: dark;
         }
+        /* Style for color picker */
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 0.5rem;
+        }
     </style>
 </head>
 <body class="bg-gray-900 flex items-center justify-center min-h-screen py-8">
@@ -125,6 +133,17 @@
                         <input type="time" id="hfs-time" step="1" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none">
                     </div>
                 </div>
+                <div>
+                    <label for="ipv4-address" class="block mb-2 text-sm font-medium text-gray-300">IPv4 Address</label>
+                    <input type="text" id="ipv4-address" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none disabled:opacity-50" placeholder="Active for 32-bit">
+                </div>
+                <div>
+                    <label for="rgb-hex-text" class="block mb-2 text-sm font-medium text-gray-300">RGB Color</label>
+                    <div class="flex items-center gap-4">
+                        <input type="color" id="rgb-color-picker" class="p-1 h-14 w-16 block bg-gray-700 border-0 cursor-pointer rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                        <input type="text" id="rgb-hex-text" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none uppercase disabled:opacity-50" placeholder="Active for 32-bit">
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -138,10 +157,13 @@
         const binaryInput = document.getElementById('binary');
         const octalInput = document.getElementById('octal');
         const binaryStreamInput = document.getElementById('binary-stream');
+        const ipv4Input = document.getElementById('ipv4-address');
         const binaryBitsDiv = document.getElementById('binary-bits');
         const signedCheckbox = document.getElementById('signed');
         const sizeRadios = document.querySelectorAll('input[name="size"]');
         const floatInput = document.getElementById('floating-point');
+        const rgbHexText = document.getElementById('rgb-hex-text');
+        const rgbColorPicker = document.getElementById('rgb-color-picker');
         
         const unixDate = document.getElementById('unix-date');
         const unixTime = document.getElementById('unix-time');
@@ -183,6 +205,16 @@
             const len = getBitLength();
             floatInput.disabled = (len !== 32 && len !== 64);
             if(floatInput.disabled) floatInput.value = '';
+
+            ipv4Input.disabled = (len !== 32);
+            if(ipv4Input.disabled) ipv4Input.value = '';
+
+            rgbHexText.disabled = (len !== 32);
+            rgbColorPicker.disabled = (len !== 32);
+            if(rgbHexText.disabled) {
+                rgbHexText.value = '';
+                rgbColorPicker.value = '#000000';
+            }
         }
 
         function renderBinaryBits(binStr) {
@@ -230,8 +262,9 @@
         }
         
         function clearAllInputs(skipId = null) {
-            const inputs = [decimalInput, hexadecimalInput, hexSwappedInput, octalInput, binaryStreamInput, floatInput, unixDate, unixTime, cocoaDate, cocoaTime, hfsDate, hfsTime];
+            const inputs = [decimalInput, hexadecimalInput, hexSwappedInput, octalInput, binaryStreamInput, ipv4Input, floatInput, rgbHexText, unixDate, unixTime, cocoaDate, cocoaTime, hfsDate, hfsTime];
             inputs.forEach(input => { if (input.id !== skipId) input.value = ''; });
+            if (skipId !== 'rgb-color-picker') rgbColorPicker.value = '#000000';
         }
 
         function setDateTimePickers(date, datePicker, timePicker) {
@@ -294,13 +327,31 @@
                             decimalValue = isSigned && num >= 2n ** BigInt(len - 1) ? num - 2n ** BigInt(len) : num;
                         }
                         break;
+                    case 'ipv4-address':
+                         if (len === 32) {
+                            const octets = sourceValue.split('.').map(o => parseInt(o, 10));
+                            if (octets.length === 4 && octets.every(o => !isNaN(o) && o >= 0 && o <= 255)) {
+                                const val = (BigInt(octets[0]) << 24n) | (BigInt(octets[1]) << 16n) | (BigInt(octets[2]) << 8n) | BigInt(octets[3]);
+                                decimalValue = isSigned ? BigInt.asIntN(32, val) : val;
+                            }
+                         }
+                         break;
+                    case 'rgb-color':
+                         if (len === 32) {
+                            const hex = sourceValue.replace('#', '');
+                            if (/^[0-9A-Fa-f]{6}$/.test(hex)) {
+                                const val = BigInt('0x' + hex);
+                                decimalValue = isSigned ? BigInt.asIntN(32, val) : val;
+                            }
+                         }
+                         break;
                     case 'floating-point':
                          if (!isNaN(parseFloat(sourceValue)) && isFinite(sourceValue)) {
                            if (len === 32) {
                                 let buf = new ArrayBuffer(4);
                                 new DataView(buf).setFloat32(0, parseFloat(sourceValue), false);
                                 let u32 = new DataView(buf).getUint32(0, false);
-                                decimalValue = isSigned ? BigInt(u32 << 32 >> 32) : BigInt(u32);
+                                decimalValue = isSigned ? BigInt.asIntN(32, BigInt(u32)) : BigInt(u32);
                            } else if (len === 64) {
                                 let buf = new ArrayBuffer(8);
                                 new DataView(buf).setFloat64(0, parseFloat(sourceValue), false);
@@ -316,7 +367,7 @@
                 binStr = padBinary(binStr, 64);
                 const activeBinStr = binStr.slice(-len);
 
-                decimalInput.value = decimalValue.toString();
+                if (sourceId !== 'decimal') decimalInput.value = decimalValue.toString();
                 
                 const normalHexValue = BigInt('0b' + activeBinStr).toString(16).toUpperCase();
                 if (sourceId !== 'hexadecimal') hexadecimalInput.value = normalHexValue;
@@ -328,20 +379,46 @@
                 if (sourceId !== 'binary') binaryInput.value = displayBinStr;
                 if (sourceId !== 'binary-stream') binaryStreamInput.value = displayBinStr;
                 renderBinaryBits(binStr);
-
+                
                 if (len === 32) {
-                    let u32 = parseInt(binStr.slice(-32), 2);
+                    const num32 = BigInt.asUintN(32, BigInt('0b' + activeBinStr));
+                    
+                    // IPv4 update
+                    const o1 = (num32 >> 24n) & 255n;
+                    const o2 = (num32 >> 16n) & 255n;
+                    const o3 = (num32 >> 8n) & 255n;
+                    const o4 = num32 & 255n;
+                    if (sourceId !== 'ipv4-address') ipv4Input.value = `${o1}.${o2}.${o3}.${o4}`;
+
+                    // RGB Color update
+                    const colorVal = num32 & 0xFFFFFFn; // Get lower 24 bits
+                    const hexColor = colorVal.toString(16).padStart(6, '0').toUpperCase();
+                    if (sourceId !== 'rgb-color' && sourceId !== 'rgb-hex-text' && sourceId !== 'rgb-color-picker') {
+                        rgbHexText.value = hexColor;
+                        rgbColorPicker.value = `#${hexColor}`;
+                    }
+
+                    // Float update
+                    let u32 = parseInt(activeBinStr, 2);
                     let buf = new ArrayBuffer(4);
                     new DataView(buf).setUint32(0, u32, false);
                     let f = new DataView(buf).getFloat32(0, false);
                     if (sourceId !== 'floating-point') floatInput.value = isFinite(f) ? f.toString() : 'NaN';
-                } else if (len === 64) {
+                } else {
+                    if (sourceId !== 'ipv4-address') ipv4Input.value = '';
+                    if (sourceId !== 'rgb-color' && sourceId !== 'rgb-hex-text' && sourceId !== 'rgb-color-picker') {
+                        rgbHexText.value = '';
+                        rgbColorPicker.value = '#000000';
+                    }
+                }
+                
+                if (len === 64) {
                     let buf = new ArrayBuffer(8);
                     new DataView(buf).setBigUint64(0, BigInt('0b' + binStr), false);
                     let d = new DataView(buf).getFloat64(0, false);
                     if (sourceId !== 'floating-point') floatInput.value = isFinite(d) ? d.toString() : 'NaN';
-                } else {
-                    if (sourceId !== 'floating-point') floatInput.value = '';
+                } else if (len !== 32) {
+                     if (sourceId !== 'floating-point') floatInput.value = '';
                 }
 
                 isUpdatingDateTime = true;
@@ -359,7 +436,7 @@
                 } finally {
                     setTimeout(() => isUpdatingDateTime = false, 0);
                 }
-            } else {
+            } else if (sourceId) {
                 clearAllInputs(sourceId);
             }
         }
@@ -380,88 +457,55 @@
         }
 
         // --- Event Listeners ---
-        hexadecimalInput.addEventListener('input', (e) => {
-            const input = e.target;
-            const originalValue = input.value;
-            const cursorPos = input.selectionStart;
-            const sanitizedValue = originalValue.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
-            if (originalValue !== sanitizedValue) {
-                input.value = sanitizedValue;
-                const diff = originalValue.length - sanitizedValue.length;
-                input.setSelectionRange(cursorPos - diff, cursorPos - diff);
-            }
-            updateValues('hexadecimal', sanitizedValue);
-        });
+        function addSanitizingListener(element, regex, sourceId) {
+             element.addEventListener('input', (e) => {
+                const input = e.target;
+                const originalValue = input.value;
+                const cursorPos = input.selectionStart;
+                let sanitizedValue = originalValue.replace(regex, '');
+                
+                if (sourceId === 'decimal' && sanitizedValue.lastIndexOf('-') > 0) {
+                     sanitizedValue = sanitizedValue.charAt(0) + sanitizedValue.slice(1).replace(/-/g, "");
+                }
+                
+                if (['hexadecimal', 'hexadecimal-swapped', 'rgb-hex-text'].includes(sourceId)) {
+                    sanitizedValue = sanitizedValue.toUpperCase();
+                }
 
-        hexSwappedInput.addEventListener('input', (e) => {
-            const input = e.target;
-            const originalValue = input.value;
-            const cursorPos = input.selectionStart;
-            const sanitizedValue = originalValue.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
-            if (originalValue !== sanitizedValue) {
-                input.value = sanitizedValue;
-                const diff = originalValue.length - sanitizedValue.length;
-                input.setSelectionRange(cursorPos - diff, cursorPos - diff);
-            }
-            updateValues('hexadecimal-swapped', sanitizedValue);
-        });
-
-        decimalInput.addEventListener('input', (e) => {
-            const input = e.target;
-            const originalValue = input.value;
-            const cursorPos = input.selectionStart;
-            let sanitizedValue = originalValue.replace(/[^-0-9]/g, '');
-            if (sanitizedValue.lastIndexOf('-') > 0) {
-                sanitizedValue = sanitizedValue.charAt(0) + sanitizedValue.slice(1).replace(/-/g, "");
-            }
-            if (originalValue !== sanitizedValue) {
-                input.value = sanitizedValue;
-                const diff = originalValue.length - sanitizedValue.length;
-                input.setSelectionRange(cursorPos - diff, cursorPos - diff);
-            }
-            updateValues('decimal', sanitizedValue);
-        });
-
-        octalInput.addEventListener('input', (e) => {
-            const input = e.target;
-            const originalValue = input.value;
-            const cursorPos = input.selectionStart;
-            const sanitizedValue = originalValue.replace(/[^0-7]/g, '');
-            if (originalValue !== sanitizedValue) {
-                input.value = sanitizedValue;
-                const diff = originalValue.length - sanitizedValue.length;
-                input.setSelectionRange(cursorPos - diff, cursorPos - diff);
-            }
-            updateValues('octal', sanitizedValue);
-        });
-
-        binaryStreamInput.addEventListener('input', (e) => {
-            const input = e.target;
-            const originalValue = input.value;
-            const cursorPos = input.selectionStart;
-            const sanitizedValue = originalValue.replace(/[^01]/g, '');
-            if (originalValue !== sanitizedValue) {
-                input.value = sanitizedValue;
-                const diff = originalValue.length - sanitizedValue.length;
-                input.setSelectionRange(cursorPos - diff, cursorPos - diff);
-            }
-            updateValues('binary-stream', sanitizedValue);
-        });
-
-        floatInput.addEventListener('input', (e) => {
-            const input = e.target;
-            const originalValue = input.value;
-            const cursorPos = input.selectionStart;
-            // Basic filter for invalid characters. Does not prevent all invalid float formats (e.g. "1.2.3").
-            const sanitizedValue = originalValue.replace(/[^0-9.eE+-]/g, '');
-            if (originalValue !== sanitizedValue) {
-                input.value = sanitizedValue;
-                const diff = originalValue.length - sanitizedValue.length;
-                input.setSelectionRange(cursorPos - diff, cursorPos - diff);
-            }
-            updateValues('floating-point', sanitizedValue);
-        });
+                if (originalValue !== sanitizedValue) {
+                    input.value = sanitizedValue;
+                    const diff = originalValue.length - sanitizedValue.length;
+                    input.setSelectionRange(cursorPos - diff, cursorPos - diff);
+                }
+                
+                if (sourceId === 'rgb-hex-text') {
+                    sanitizedValue = sanitizedValue.substring(0,6);
+                    input.value = sanitizedValue;
+                    if (sanitizedValue.length === 6) {
+                        rgbColorPicker.value = `#${sanitizedValue}`;
+                        updateValues('rgb-color', sanitizedValue);
+                    }
+                } else {
+                    updateValues(sourceId, sanitizedValue);
+                }
+            });
+        }
         
+        addSanitizingListener(hexadecimalInput, /[^0-9a-fA-F]/g, 'hexadecimal');
+        addSanitizingListener(hexSwappedInput, /[^0-9a-fA-F]/g, 'hexadecimal-swapped');
+        addSanitizingListener(decimalInput, /[^-0-9]/g, 'decimal');
+        addSanitizingListener(octalInput, /[^0-7]/g, 'octal');
+        addSanitizingListener(binaryStreamInput, /[^01]/g, 'binary-stream');
+        addSanitizingListener(ipv4Input, /[^0-9.]/g, 'ipv4-address');
+        addSanitizingListener(floatInput, /[^0-9.eE+-]/g, 'floating-point');
+        addSanitizingListener(rgbHexText, /[^0-9a-fA-F]/g, 'rgb-hex-text');
+
+        rgbColorPicker.addEventListener('input', (e) => {
+            const hex = e.target.value.substring(1).toUpperCase();
+            rgbHexText.value = hex;
+            updateValues('rgb-color', hex);
+        });
+
         const unixHandler = createDateTimeHandler(unixDate, unixTime, 0n);
         unixDate.addEventListener('input', unixHandler);
         unixTime.addEventListener('input', unixHandler);
