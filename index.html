@@ -95,32 +95,31 @@
             <div class="border-t border-gray-700 my-2"></div>
 
             <!-- Time and Date Inputs -->
-            <div class="grid grid-cols-1 gap-4">
+            <div class="grid grid-cols-1 gap-6">
                 <div id="floating-point-wrapper">
                     <label for="floating-point" class="block mb-2 text-sm font-medium text-gray-300">Floating Point (IEEE 754)</label>
                     <input type="text" id="floating-point" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none disabled:opacity-50" placeholder="Active for 32/64-bit">
                 </div>
-                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="date-input" class="block mb-2 text-sm font-medium text-gray-300">Date (UTC)</label>
-                        <input type="date" id="date-input" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none">
-                    </div>
-                    <div>
-                        <label for="time-input" class="block mb-2 text-sm font-medium text-gray-300">Time (UTC)</label>
-                        <input type="time" id="time-input" step="1" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none">
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-300">UNIX Time (Epoch: 1970-01-01)</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="date" id="unix-date" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none">
+                        <input type="time" id="unix-time" step="1" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none">
                     </div>
                 </div>
-                <div id="timestamp-wrapper">
-                    <label for="timestamp" class="block mb-2 text-sm font-medium text-gray-300">UNIX Timestamp (seconds)</label>
-                    <input type="text" id="timestamp" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none" placeholder="Epoch: 1970-01-01">
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-300">Cocoa Core Data Time (Epoch: 2001-01-01)</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="date" id="cocoa-date" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none">
+                        <input type="time" id="cocoa-time" step="1" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none">
+                    </div>
                 </div>
-                 <div id="cocoa-timestamp-wrapper">
-                    <label for="cocoa-timestamp" class="block mb-2 text-sm font-medium text-gray-300">Cocoa Core Data Timestamp</label>
-                    <input type="text" id="cocoa-timestamp" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none" placeholder="Epoch: 2001-01-01">
-                </div>
-                <div id="hfs-timestamp-wrapper">
-                    <label for="hfs-timestamp" class="block mb-2 text-sm font-medium text-gray-300">Mac HFS+ Timestamp</label>
-                    <input type="text" id="hfs-timestamp" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none" placeholder="Epoch: 1904-01-01">
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-300">Mac HFS+ Time (Epoch: 1904-01-01)</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="date" id="hfs-date" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none">
+                        <input type="time" id="hfs-time" step="1" class="bg-gray-700 border-0 text-white text-lg rounded-lg block w-full p-4 outline-none">
+                    </div>
                 </div>
             </div>
         </div>
@@ -138,13 +137,14 @@
         const signedCheckbox = document.getElementById('signed');
         const sizeRadios = document.querySelectorAll('input[name="size"]');
         const floatInput = document.getElementById('floating-point');
-        const timestampInput = document.getElementById('timestamp');
-        const cocoaTimestampInput = document.getElementById('cocoa-timestamp');
-        const hfsTimestampInput = document.getElementById('hfs-timestamp');
-        const dateInput = document.getElementById('date-input');
-        const timeInput = document.getElementById('time-input');
+        
+        const unixDate = document.getElementById('unix-date');
+        const unixTime = document.getElementById('unix-time');
+        const cocoaDate = document.getElementById('cocoa-date');
+        const cocoaTime = document.getElementById('cocoa-time');
+        const hfsDate = document.getElementById('hfs-date');
+        const hfsTime = document.getElementById('hfs-time');
 
-        const inputs = [decimalInput, hexadecimalInput, octalInput, binaryStreamInput, floatInput, timestampInput, cocoaTimestampInput, hfsTimestampInput, dateInput, timeInput];
         let isUpdatingDateTime = false;
 
         // --- State & Constants ---
@@ -204,8 +204,7 @@
                         }
                         bitsRow.appendChild(span);
                     }
-                    const groupStartBitIdx = line * 16 + group * 4;
-                    const lsbIdx = 63 - (groupStartBitIdx + 3);
+                    const lsbIdx = 63 - (line * 16 + group * 4 + 3);
                     const idxLabel = document.createElement('span');
                     idxLabel.textContent = lsbIdx;
                     idxLabel.className = 'block text-xs text-gray-400 w-full text-right mt-0.5';
@@ -218,9 +217,25 @@
         }
         
         function clearAllInputs(skipId = null) {
-            inputs.forEach(input => {
-                if (input.id !== skipId) input.value = '';
-            });
+            const inputs = [decimalInput, hexadecimalInput, octalInput, binaryStreamInput, floatInput, unixDate, unixTime, cocoaDate, cocoaTime, hfsDate, hfsTime];
+            inputs.forEach(input => { if (input.id !== skipId) input.value = ''; });
+        }
+
+        function setDateTimePickers(date, datePicker, timePicker) {
+            if (isNaN(date.getTime())) {
+                datePicker.value = '';
+                timePicker.value = '';
+                return;
+            }
+            const year = date.getUTCFullYear();
+            const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+            const day = date.getUTCDate().toString().padStart(2, '0');
+            datePicker.value = `${year}-${month}-${day}`;
+            
+            const hours = date.getUTCHours().toString().padStart(2, '0');
+            const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+            const seconds = date.getUTCSeconds().toString().padStart(2, '0');
+            timePicker.value = `${hours}:${minutes}:${seconds}`;
         }
 
         // --- Core Conversion Logic ---
@@ -231,43 +246,32 @@
                 return;
             }
 
-            let decimalValue; // This holds the primary integer value
+            let decimalValue;
             let binStr = '';
             const isSigned = signedCheckbox.checked;
             const len = getBitLength();
 
             try {
-                let unixTimestamp;
                 switch (sourceId) {
                     case 'decimal':
-                    case 'timestamp':
-                        if (/^-?\d+$/.test(sourceValue)) unixTimestamp = BigInt(sourceValue);
-                        break;
-                    case 'cocoa-timestamp':
-                         if (/^-?\d+$/.test(sourceValue)) unixTimestamp = BigInt(sourceValue) + COCOA_EPOCH_OFFSET;
-                        break;
-                    case 'hfs-timestamp':
-                        if (/^-?\d+$/.test(sourceValue)) unixTimestamp = BigInt(sourceValue) - HFS_EPOCH_OFFSET;
+                        if (/^-?\d+$/.test(sourceValue)) decimalValue = BigInt(sourceValue);
                         break;
                     case 'hexadecimal':
                         if (/^[0-9A-Fa-f]+$/.test(sourceValue)) {
                             let num = BigInt('0x' + sourceValue);
-                            binStr = num.toString(2);
                             decimalValue = isSigned && num >= 2n ** BigInt(len - 1) ? num - 2n ** BigInt(len) : num;
                         }
                         break;
                     case 'binary':
                     case 'binary-stream':
                         if (/^[01]+$/.test(sourceValue)) {
-                            binStr = sourceValue;
-                            let num = BigInt('0b' + padBinary(binStr, len).slice(-len));
-                            decimalValue = isSigned && binStr.padStart(len, '0')[0] === '1' ? num - 2n ** BigInt(len) : num;
+                            let num = BigInt('0b' + padBinary(sourceValue, len).slice(-len));
+                            decimalValue = isSigned && sourceValue.padStart(len, '0')[0] === '1' ? num - 2n ** BigInt(len) : num;
                         }
                         break;
                     case 'octal':
                         if (/^[0-7]+$/.test(sourceValue)) {
                             let num = BigInt('0o' + sourceValue);
-                            binStr = num.toString(2);
                             decimalValue = isSigned && num >= 2n ** BigInt(len - 1) ? num - 2n ** BigInt(len) : num;
                         }
                         break;
@@ -277,33 +281,23 @@
                                 let buf = new ArrayBuffer(4);
                                 new DataView(buf).setFloat32(0, parseFloat(sourceValue), false);
                                 let u32 = new DataView(buf).getUint32(0, false);
-                                binStr = u32.toString(2);
                                 decimalValue = isSigned ? BigInt(u32 << 32 >> 32) : BigInt(u32);
                            } else if (len === 64) {
                                 let buf = new ArrayBuffer(8);
                                 new DataView(buf).setFloat64(0, parseFloat(sourceValue), false);
-                                let u64 = new DataView(buf).getBigUint64(0, false);
-                                binStr = u64.toString(2);
-                                decimalValue = isSigned ? new DataView(buf).getBigInt64(0, false) : u64;
+                                decimalValue = isSigned ? new DataView(buf).getBigInt64(0, false) : new DataView(buf).getBigUint64(0, false);
                            }
                         }
                         break;
                 }
-                
-                if (typeof unixTimestamp !== 'undefined') {
-                    decimalValue = unixTimestamp;
-                }
-                if (typeof decimalValue !== 'undefined') {
-                    binStr = (isSigned && decimalValue < 0 ? decimalValue + (2n ** BigInt(len)) : decimalValue).toString(2);
-                }
-
             } catch (e) { console.error(e); }
 
             if (typeof decimalValue !== 'undefined') {
+                binStr = (isSigned && decimalValue < 0 ? decimalValue + (2n ** BigInt(len)) : decimalValue).toString(2);
                 binStr = padBinary(binStr, 64);
                 const activeBinStr = binStr.slice(-len);
-                
-                if (sourceId !== 'decimal') decimalInput.value = decimalValue.toString();
+
+                decimalInput.value = decimalValue.toString();
                 if (sourceId !== 'hexadecimal') hexadecimalInput.value = BigInt('0b' + activeBinStr).toString(16).toUpperCase();
                 if (sourceId !== 'octal') octalInput.value = BigInt('0b' + activeBinStr).toString(8);
 
@@ -327,31 +321,18 @@
                     if (sourceId !== 'floating-point') floatInput.value = '';
                 }
 
-                const unsignedVal = BigInt('0b' + activeBinStr);
-                const valForTimestamp = isSigned ? decimalValue : unsignedVal;
-
-                if (sourceId !== 'timestamp') timestampInput.value = valForTimestamp.toString();
-                if (sourceId !== 'cocoa-timestamp') cocoaTimestampInput.value = (valForTimestamp - COCOA_EPOCH_OFFSET).toString();
-                if (sourceId !== 'hfs-timestamp') hfsTimestampInput.value = (valForTimestamp + HFS_EPOCH_OFFSET).toString();
-                
                 isUpdatingDateTime = true;
                 try {
-                    const date = new Date(Number(valForTimestamp) * 1000);
-                    if (isNaN(date.getTime())) throw new Error("Invalid Date");
-
-                    const year = date.getUTCFullYear();
-                    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
-                    const day = date.getUTCDate().toString().padStart(2, '0');
-                    dateInput.value = `${year}-${month}-${day}`;
+                    const valForTimestamp = isSigned ? decimalValue : BigInt('0b' + activeBinStr);
+                    const unixTimestampMs = Number(valForTimestamp) * 1000;
+                    const cocoaTimestampMs = Number(valForTimestamp + COCOA_EPOCH_OFFSET) * 1000;
+                    const hfsTimestampMs = Number(valForTimestamp - HFS_EPOCH_OFFSET) * 1000;
                     
-                    const hours = date.getUTCHours().toString().padStart(2, '0');
-                    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-                    const seconds = date.getUTCSeconds().toString().padStart(2, '0');
-                    timeInput.value = `${hours}:${minutes}:${seconds}`;
-
+                    setDateTimePickers(new Date(unixTimestampMs), unixDate, unixTime);
+                    setDateTimePickers(new Date(cocoaTimestampMs), cocoaDate, cocoaTime);
+                    setDateTimePickers(new Date(hfsTimestampMs), hfsDate, hfsTime);
                 } catch {
-                   dateInput.value = '';
-                   timeInput.value = '';
+                   [unixDate, unixTime, cocoaDate, cocoaTime, hfsDate, hfsTime].forEach(el => el.value = '');
                 } finally {
                     setTimeout(() => isUpdatingDateTime = false, 0);
                 }
@@ -362,19 +343,19 @@
         
         // --- Event Listener Helpers ---
         function createIntegerInputHandler(id) { return (e) => updateValues(id, e.target.value); }
-        function createTimestampInputHandler(id) { return (e) => updateValues(id, e.target.value); }
 
-        function handleDateTimeChange() {
-            if (isUpdatingDateTime) return;
-            const dateStr = dateInput.value;
-            const timeStr = timeInput.value;
-            if (dateStr && timeStr) {
-                const [year, month, day] = dateStr.split('-');
-                const [hours, minutes, seconds] = timeStr.split(':');
-                const date = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds || 0));
-                const unixTimestamp = Math.floor(date.getTime() / 1000);
-                updateValues('timestamp', unixTimestamp.toString());
-            }
+        function createDateTimeHandler(dateEl, timeEl, epochOffset = 0n) {
+            return () => {
+                if (isUpdatingDateTime) return;
+                const dateStr = dateEl.value;
+                const timeStr = timeEl.value;
+                if (dateStr && timeStr) {
+                    const utcDate = new Date(`${dateStr}T${timeStr}Z`);
+                    const unixTimestamp = BigInt(Math.floor(utcDate.getTime() / 1000));
+                    const newDecimalValue = unixTimestamp - epochOffset;
+                    updateValues('decimal', newDecimalValue.toString());
+                }
+            };
         }
 
         // --- Event Listeners ---
@@ -383,18 +364,28 @@
         octalInput.addEventListener('input', createIntegerInputHandler('octal'));
         binaryStreamInput.addEventListener('input', createIntegerInputHandler('binary-stream'));
         floatInput.addEventListener('input', (e) => updateValues('floating-point', e.target.value));
-        timestampInput.addEventListener('input', createTimestampInputHandler('timestamp'));
-        cocoaTimestampInput.addEventListener('input', createTimestampInputHandler('cocoa-timestamp'));
-        hfsTimestampInput.addEventListener('input', createTimestampInputHandler('hfs-timestamp'));
-        dateInput.addEventListener('input', handleDateTimeChange);
-        timeInput.addEventListener('input', handleDateTimeChange);
+        
+        const unixHandler = createDateTimeHandler(unixDate, unixTime, 0n);
+        unixDate.addEventListener('input', unixHandler);
+        unixTime.addEventListener('input', unixHandler);
+
+        const cocoaHandler = createDateTimeHandler(cocoaDate, cocoaTime, COCOA_EPOCH_OFFSET);
+        cocoaDate.addEventListener('input', cocoaHandler);
+        cocoaTime.addEventListener('input', cocoaHandler);
+        
+        const hfsHandler = createDateTimeHandler(hfsDate, hfsTime, -HFS_EPOCH_OFFSET);
+        hfsDate.addEventListener('input', hfsHandler);
+        hfsTime.addEventListener('input', hfsHandler);
 
         signedCheckbox.addEventListener('change', () => updateValues('decimal', decimalInput.value || '0'));
         sizeRadios.forEach(radio => radio.addEventListener('change', (e) => setBitLength(e.target.value, true)));
 
         // --- Initial Setup ---
-        setBitLength(64);
-        renderBinaryBits('0');
+        window.addEventListener('load', () => {
+            setBitLength(64);
+            clearAllInputs();
+            renderBinaryBits('0');
+        });
 
     </script>
 </body>
